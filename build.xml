@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+
+<project name="Trader" basedir="." default="makeWar">
+
+    <property file="build.properties"/>
+
+	<property name="name" value="trader"/>
+    <property name="src.dir" value="src/main/java"/>
+    <property name="web.dir" value="src/main/webapp"/>
+    <property name="build.dir" value="${web.dir}/WEB-INF/classes"/>
+
+    <path id="master-classpath">
+        <fileset dir="${web.dir}/WEB-INF/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${appserver.lib}">
+            <include name="servlet*.jar"/>
+            <include name="jsp-api.jar"/>
+        </fileset>
+        <pathelement path="${build.dir}"/>
+    </path>
+
+	<target name="clean">
+        <delete>
+            <fileset dir="${build.dir}">
+                <include name="**/*.class"/>
+            </fileset>
+        </delete>
+		<delete dir="${deploy.path}/${name}"/>
+    </target>
+
+    <target name="build" depends="clean">
+        <mkdir dir="${build.dir}"/>
+        <javac destdir="${build.dir}" source="1.6" target="1.6" debug="true"
+               deprecation="false" optimize="false" failonerror="true">
+            <src path="${src.dir}"/>
+            <classpath refid="master-classpath"/>
+        </javac>
+    </target>
+
+	<target name="makeWar" depends="build">
+        <war destfile="${name}.war"
+             webxml="${web.dir}/WEB-INF/web.xml">
+            <fileset dir="${web.dir}">
+                <include name="**/*.*"/>
+            </fileset>
+        </war>
+    </target>
+    	
+    <target name="copyWar" depends="makeWar">
+        <copy todir="${deploy.path}" preservelastmodified="true">
+            <fileset dir=".">
+                <include name="*.war"/>
+            </fileset>
+        </copy>
+    </target>
+	
+	<target name="deployWar" depends="tomcat-stop, copyWar, tomcat-start" />
+
+	<target name="copyJSP">
+		<copy todir="${deploy.path}/${name}" verbose="yes">
+			<fileset dir="${web.dir}">
+				<include name="**/*.jsp"/>
+				<include name="**/*.css"/>
+				<include name="**/*.js"/>
+				<include name="**/*.jpg"/>
+				<include name="**/*.gif"/>
+				<include name="**/*.xml"/>
+				<include name="**/*.pdf"/>
+			</fileset>
+		</copy>		
+	</target>
+
+	<target name="tomcat-start">
+		<echo>Starting Tomcat...</echo>
+	    <java jar="${appserver.home}/bin/bootstrap.jar" fork="true">
+	        <jvmarg value="-Dcatalina.home=${appserver.home}"/>
+	    </java>
+	</target>
+
+	<target name="tomcat-stop" depends="tomcat-check-status" if="tomcat.started">
+		<echo>Stopping Tomcat...</echo>
+	    <java jar="${appserver.home}/bin/bootstrap.jar" fork="true">
+	        <jvmarg value="-Dcatalina.home=${appserver.home}"/>
+	        <arg line="stop"/>
+	    </java>
+		<sleep seconds="2"/>
+	</target>
+
+	<target name="tomcat-check-status">
+		<echo>Checking to see if Tomcat is running on port ${appserver.port}</echo>
+	    <condition property="tomcat.started" value="true">
+	        <socket server="localhost" port="${appserver.port}"/>
+	    </condition>
+	</target>
+
+</project>
