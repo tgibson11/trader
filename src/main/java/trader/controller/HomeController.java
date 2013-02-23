@@ -1,12 +1,9 @@
 package trader.controller;
 
 import static trader.constants.Constants.CSS_CLASS_SELECTED;
-import static trader.constants.Constants.HOME_VIEW;
-import static trader.constants.Constants.ROLLOVER_VIEW;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -24,6 +22,9 @@ import trader.service.MessageService;
 
 @Controller
 public class HomeController {
+	
+	private static final String VIEW = "home";
+	private static final String ROLLOVER_VIEW = "redirect:rollover";
 	
     protected final Log logger = LogFactory.getLog(getClass());
     
@@ -37,20 +38,20 @@ public class HomeController {
     private MessageService messageService;
     
 	@RequestMapping(value = "home", method = RequestMethod.GET)
-    public String showForm(Map<String, Object> model) {
+    public String showForm(Model model) {
 
     	// Use a new list to avoid concurrentModificationException
     	List<Message> infoMessages = new ArrayList<Message>();    	
     	infoMessages.addAll(messageService.getInfoMessages());
     	
-    	model.put("homeClass", CSS_CLASS_SELECTED);
-    	model.put("info", infoMessages);
+    	model.addAttribute("homeClass", CSS_CLASS_SELECTED);
+    	model.addAttribute("info", infoMessages);
     	
-    	return HOME_VIEW;
+    	return VIEW;
     }
 
 	@RequestMapping(value = "home", method = RequestMethod.POST)
-    public String onSubmit(HttpServletRequest request) throws Exception {
+    public String onSubmit(HttpServletRequest request, Model model) throws Exception {
     	
     	if (request.getParameter("_connectTWS") != null) {
     		logger.info("Connecting to TWS...");
@@ -68,8 +69,8 @@ public class HomeController {
     		clientService.startPositionSizing();
     	}
     	
-    	logger.info("Returning to " + HOME_VIEW);   	
-        return "redirect:" + HOME_VIEW;
+    	logger.info("Returning to " + VIEW);   	
+        return showForm(model);
     }
     
 }
