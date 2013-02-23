@@ -1,16 +1,14 @@
 package trader.controller;
 
 import static trader.constants.Constants.CSS_CLASS_SELECTED;
-import static trader.constants.Constants.HOME_VIEW;
-import static trader.constants.Constants.ROLLOVER_VIEW;
-
-import java.util.Map;
 
 import javax.annotation.Resource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
@@ -25,6 +23,9 @@ import trader.validator.RolloverValidator;
 
 @Controller
 public class RolloverController {
+	
+	private static final String FORM_VIEW = "rollover";
+	private static final String SUCCESS_VIEW = "redirect:home";
 	
     protected final Log logger = LogFactory.getLog(getClass());
     
@@ -48,25 +49,29 @@ public class RolloverController {
     }
     
 	@RequestMapping(value = "rollover", method = RequestMethod.GET)
-    public String showForm(Map<String, Object> model) throws Exception {
-		model.put("rolloverClass", CSS_CLASS_SELECTED);
-		model.put("contracts", contractService.getContracts());
-		model.put("expiries", contractService.getExpiries());
-		model.put("rollovers", contractService.getRollovers());
-    	return ROLLOVER_VIEW;
+    public String showForm(Model model) {
+		model.addAttribute("rolloverClass", CSS_CLASS_SELECTED);
+		model.addAttribute("contracts", contractService.getContracts());
+		model.addAttribute("expiries", contractService.getExpiries());
+		model.addAttribute("rollovers", contractService.getRollovers());
+    	return FORM_VIEW;
     }
     
 	@RequestMapping(value = "rollover", method = RequestMethod.POST)
-    public String onSubmit(@ModelAttribute("command") @Validated RolloverCommand command) throws Exception {
+    public String onSubmit(@ModelAttribute("command") @Validated RolloverCommand command, BindingResult bindingResult, Model model) throws Exception {
 
+		if (bindingResult.hasErrors()) {
+			return showForm(model);
+		}
+		
     	String symbol = command.getSymbol();
     	String expiry = command.getExpiry();
    	   	
         logger.info("Rolling over " + symbol + " to " + expiry);
 		tradeService.rollover(symbol, expiry);
 
-        logger.info("returning from Rollover view to " + HOME_VIEW);
-        return "redirect:" + HOME_VIEW;
+        logger.info("returning from Rollover view to " + SUCCESS_VIEW);
+        return "redirect:" + SUCCESS_VIEW;
     }
 
 }
