@@ -10,9 +10,6 @@ public class Constants {
 	public static final String HIGH_CORRELATION = "HIGH";
 	public static final String LOW_CORRELATION = "LOW";
 	
-	public static final String HOME_VIEW = "home";
-	public static final String ROLLOVER_VIEW = "rollover";
-
 	public static final String CSS_CLASS_SELECTED = "selected";
 	
 }
