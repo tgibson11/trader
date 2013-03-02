@@ -70,8 +70,7 @@ public class RolloverController {
         logger.info("Rolling over " + symbol + " to " + expiry);
 		tradeService.rollover(symbol, expiry);
 
-        logger.info("returning from Rollover view to " + SUCCESS_VIEW);
-        return "redirect:" + SUCCESS_VIEW;
+        return SUCCESS_VIEW;
     }
 
 }

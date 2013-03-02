@@ -62,8 +62,7 @@ public class HomeController {
     	} else if (request.getParameter("_checkRollovers") != null) {
     		logger.info("Checking for contracts to rollover...");
     		clientService.checkForRollovers();
-        	logger.info("Redirecting to " + ROLLOVER_VIEW);   	
-    		return "redirect:" + ROLLOVER_VIEW;
+    		return ROLLOVER_VIEW;
     	} else if (request.getParameter("_positionSizing") != null) {
     		logger.info("Starting position sizing...");
     		clientService.startPositionSizing();
