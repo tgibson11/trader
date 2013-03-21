@@ -86,3 +86,18 @@ CREATE TABLE contract_month
    CONSTRAINT contract_month_pk  PRIMARY KEY (symbol, month),
    CONSTRAINT contract_month_fk1 FOREIGN KEY (symbol) REFERENCES contract (symbol))
   ENGINE=InnoDB;
+  
+CREATE TABLE execution (
+	execution_id	INTEGER			NOT NULL PRIMARY KEY,
+	execution_dt	DATETIME		NOT NULL,
+	account_id		VARCHAR(10)		NOT NULL,
+	order_id		INTEGER 		NOT NULL,
+	symbol			VARCHAR(3)		NOT NULL,
+	action          VARCHAR(3)  	NOT NULL,
+	quantity        INTEGER			NOT NULL,
+	price			NUMERIC(10,6)	NOT NULL,
+	order_price		NUMERIC(10,6),
+	CONSTRAINT execution_fk1	FOREIGN KEY (account_id)	REFERENCES account (account_id),
+	CONSTRAINT execution_fk2	FOREIGN KEY (symbol)		REFERENCES contract (symbol))
+	ENGINE=InnoDB;
+	
