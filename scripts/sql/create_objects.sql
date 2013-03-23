@@ -88,7 +88,7 @@ CREATE TABLE contract_month
   ENGINE=InnoDB;
   
 CREATE TABLE execution (
-	execution_id	INTEGER			NOT NULL PRIMARY KEY,
+	execution_id	INTEGER			NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	execution_dt	DATETIME		NOT NULL,
 	account_id		VARCHAR(10)		NOT NULL,
 	order_id		INTEGER 		NOT NULL,
