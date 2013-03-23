@@ -31,14 +31,14 @@ public class ContractService {
 	private ContractDao contractDao;
 	
 	@Resource
+	private ExecutionService executionService;
+	
+	@Resource
 	private OrderService orderService;
 	
 	@Resource
 	private ParameterService parameterService;
-	
-	@Resource
-	private TradeService tradeService;
-	
+		
     private Map<Integer, ExtContract> histDataContracts = new HashMap<Integer, ExtContract>();
     private List<Rollover> rollovers = new ArrayList<Rollover>();
     private boolean calculateAtr;
@@ -102,7 +102,7 @@ public class ContractService {
         }
         
     	if (finished) {
-        	tradeService.setRolloverSymbol(null);
+        	executionService.setRolloverSymbol(null);
         	orderService.updateOrders();
     	}
 

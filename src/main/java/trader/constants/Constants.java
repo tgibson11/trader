@@ -12,4 +12,6 @@ public class Constants {
 	
 	public static final String CSS_CLASS_SELECTED = "selected";
 	
+	public static final String DATE_TIME_PATTERN = "yyyyMMdd HH:mm:ss";
+	
 }

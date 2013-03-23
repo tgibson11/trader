@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import trader.command.RolloverCommand;
 import trader.service.ContractService;
-import trader.service.TradeService;
+import trader.service.ExecutionService;
 import trader.validator.RolloverValidator;
 
 @Controller
@@ -33,7 +33,7 @@ public class RolloverController {
     private ContractService contractService;
     
     @Resource
-    private TradeService tradeService;
+    private ExecutionService executionService;
    
 	@Resource
 	private RolloverValidator validator;
@@ -68,7 +68,7 @@ public class RolloverController {
     	String expiry = command.getExpiry();
    	   	
         logger.info("Rolling over " + symbol + " to " + expiry);
-		tradeService.rollover(symbol, expiry);
+		executionService.rollover(symbol, expiry);
 
         return SUCCESS_VIEW;
     }

@@ -18,6 +18,7 @@ import trader.domain.Account;
 import trader.domain.ExtContract;
 import trader.domain.Rollover;
 
+import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
 import com.ib.client.EClientSocket;
@@ -36,6 +37,9 @@ public class ClientService implements EWrapper {
 
 	@Resource
 	private ContractService contractService;
+	
+	@Resource
+	private ExecutionService executionService;
 	
 	@Resource
 	private MessageService messageService;
@@ -289,7 +293,7 @@ public class ClientService implements EWrapper {
     	String msg = EWrapperMsgGenerator.execDetails(reqId, contract, execution);
     	messageService.addDataMessage(msg);
     	
-    	tradeService.handleExecution(contract, execution);
+    	executionService.handleExecution(contract, execution);
     }
 
     public void execDetailsEnd(int reqId) {
@@ -391,4 +395,19 @@ public class ClientService implements EWrapper {
     	String msg = EWrapperMsgGenerator.connectionClosed();
     	messageService.addInfoMessage(msg);
     }
+
+	public void tickOptionComputation(int tickerId, int field,
+			double impliedVol, double delta, double optPrice,
+			double pvDividend, double gamma, double vega, double theta,
+			double undPrice) {
+        throw new UnsupportedOperationException("tickOptionComputation is not supported");		
+	}
+
+	public void marketDataType(int reqId, int marketDataType) {
+        throw new UnsupportedOperationException("marketDataType is not supported");		
+	}
+
+	public void commissionReport(CommissionReport commissionReport) {
+        throw new UnsupportedOperationException("commissionReport is not supported");		
+	}
 }
