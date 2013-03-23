@@ -1,97 +1,155 @@
-<?xml version="1.0"?>
-
-<project name="Trader" basedir="." default="makeWar">
-
-    <property file="build.properties"/>
-
-	<property name="name" value="trader"/>
-    <property name="src.dir" value="src/main/java"/>
-    <property name="web.dir" value="src/main/webapp"/>
-    <property name="build.dir" value="${web.dir}/WEB-INF/classes"/>
-
-    <path id="master-classpath">
-        <fileset dir="${web.dir}/WEB-INF/lib">
-            <include name="*.jar"/>
-        </fileset>
-        <fileset dir="${appserver.lib}">
-            <include name="servlet*.jar"/>
-            <include name="jsp-api.jar"/>
-        </fileset>
-        <pathelement path="${build.dir}"/>
-    </path>
-
-	<target name="clean">
-        <delete>
-            <fileset dir="${build.dir}">
-                <include name="**/*.class"/>
-            </fileset>
-        </delete>
-		<delete dir="${deploy.path}/${name}"/>
-    </target>
-
-    <target name="build" depends="clean">
-        <mkdir dir="${build.dir}"/>
-        <javac destdir="${build.dir}" source="1.6" target="1.6" debug="true"
-               deprecation="false" optimize="false" failonerror="true">
-            <src path="${src.dir}"/>
-            <classpath refid="master-classpath"/>
-        </javac>
-    </target>
-
-	<target name="makeWar" depends="build">
-        <war destfile="${name}.war"
-             webxml="${web.dir}/WEB-INF/web.xml">
-            <fileset dir="${web.dir}">
-                <include name="**/*.*"/>
-            </fileset>
-        </war>
-    </target>
-    	
-    <target name="copyWar" depends="makeWar">
-        <copy todir="${deploy.path}" preservelastmodified="true">
-            <fileset dir=".">
-                <include name="*.war"/>
-            </fileset>
-        </copy>
-    </target>
+<!-- ============================================================== -->
+<!--                Verify Settings                                 -->
+<!-- ============================================================== -->
+<project name="Trader" default="warToPC" basedir=".">
 	
-	<target name="deployWar" depends="tomcat-stop, copyWar, tomcat-start" />
+	<!-- the names of your war file (.war will be appended automatically, so don't include it here) -->
+	<property name="war-file" value="trader" />
+	
+	<!-- where your java code lives -->
+	<property name="src-dir" value="src/main/java" />
+	
+	<!-- where your compiled java bytecode will live -->
+	<property name="build-dir" value="build/classes" />
+	
+	<!-- where your web docs live (you should have a war file/directory structure under here) -->
+	<property name="docs-dir" value="src/main/webapp" />
+	
+	<!-- where your resource (.properties) files live -->
+	<property name="resources-dir" value="src/main/resources" />
+	
+	<!-- where your jars live -->
+	<property name="lib-dir" value="${docs-dir}/WEB-INF/lib" />
+	
+	<property name = "catalina-home" value="C:\Program Files\Apache Software Foundation\Tomcat 7.0" />
+	<property name = "catalina-port" value="80" />
+	
+<!-- ============================================================== -->
+<!--                 End Verify Settings                            -->
+<!-- ============================================================== -->	
 
-	<target name="copyJSP">
-		<copy todir="${deploy.path}/${name}" verbose="yes">
-			<fileset dir="${web.dir}">
+	<property name="deploy-dir"    value="${catalina-home}\webapps"/>
+	<property name="webapp-dir" value="${deploy-dir}\${war-file}"/>
+	
+	<!-- delete bytecode and war file -->
+	<target name="clean">
+		<echo>Deleting ${build-dir} and war-file...</echo>
+		<delete dir="${build-dir}"/>
+		<delete>
+			<fileset dir=".">
+				<include name="*.war"/>
+			</fileset>
+		</delete>
+	</target>
+
+	<!-- compile java code -->
+	<target name="compile" depends="clean">
+		<echo>Compiling java...</echo>
+		<mkdir dir="${build-dir}"/>
+		<javac srcdir="${src-dir}" destdir="${build-dir}" debug="true">
+			<classpath>
+				<fileset dir="${lib-dir}">
+					<include name="**/*.jar"/>
+				</fileset>
+				<fileset dir="${catalina-home}">
+					<include name="**/*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+	
+	<!-- build war file -->
+	<target name="makeWar" depends="compile">
+		
+		<!-- copy resources into webapp file structure -->
+		<mkdir dir="${docs-dir}/WEB-INF/classes"/>
+		<copy todir="${docs-dir}/WEB-INF/classes" overwrite="true">
+			<fileset dir="${resources-dir}"/>
+		</copy>		
+
+		<war warfile="${war-file}.war" webxml="${docs-dir}/WEB-INF/web.xml">
+			<classes dir="${build-dir}" />
+			<fileset dir="${docs-dir}">
+				<exclude name="**/servlet-api.jar"/>
+			</fileset>
+		</war>
+		
+		<!-- delete classes directory from webapp file structure -->
+		<delete quiet="true" dir="${docs-dir}/WEB-INF/classes"/>
+	</target>
+
+	<!-- just copies new jsps to deployed webapp directory -->
+	<target name="jspToPC">
+		<copy todir="${webapp-dir}" verbose="yes">
+			<fileset dir="${docs-dir}">
 				<include name="**/*.jsp"/>
 				<include name="**/*.css"/>
 				<include name="**/*.js"/>
 				<include name="**/*.jpg"/>
 				<include name="**/*.gif"/>
 				<include name="**/*.xml"/>
-				<include name="**/*.pdf"/>
 			</fileset>
-		</copy>		
+		</copy>
+		<copy todir="${webapp-dir}/WEB-INF/classes" overwrite="true">
+			<fileset dir="${resources-dir}"/>
+		</copy>	
+	</target>
+	
+	<!-- stop and delete current install if it exists -->
+	<target name="deleteAppPC">
+	    <echo>Deleting ALL existing Apps related to this project...</echo>
+		<!-- delete existing deployment (the war file and app directory) -->
+		<delete file="${deploy-dir}/${war-file}.war"/>
+		<delete dir="${deploy-dir}/${war-file}" failonerror="false" />
 	</target>
 
-	<target name="tomcat-start">
-		<echo>Starting Tomcat...</echo>
-	    <java jar="${appserver.home}/bin/bootstrap.jar" fork="true">
-	        <jvmarg value="-Dcatalina.home=${appserver.home}"/>
-	    </java>
+	<target name="copyWarToPC">
+		<echo>Copying war file to webapps directory...</echo>
+		<!-- copy war file to webapps directory -->
+		<copy todir="${deploy-dir}">
+			<fileset file="${war-file}.war"/>
+		</copy>
+	</target>
+	
+	<!-- deloys war on local PC -->
+	<target name="warToPC" depends="tomcat-stop, makeWar, deleteAppPC, copyWarToPC, tomcat-start">
 	</target>
 
+	<target name="tomcat-check-status">
+		<echo>Checking to see if Tomcat is running on port ${catalina-port}</echo>
+	    <condition property="tomcat.started" value="true">
+	        <socket server="localhost" port="${catalina-port}"/>
+	    </condition>
+	</target>
+	
+	<path id="tomcat.class.path">
+	    <fileset dir="${catalina-home}/lib">
+	        <include name="**/*.jar"/>
+	        <include name="**/*.zip"/>
+	    </fileset>
+	    <pathelement location="${catalina-home}/bin/bootstrap.jar"/>
+	    <pathelement location="${catalina-home}/bin/tomcat-juli.jar"/>
+	</path>
+	
 	<target name="tomcat-stop" depends="tomcat-check-status" if="tomcat.started">
 		<echo>Stopping Tomcat...</echo>
-	    <java jar="${appserver.home}/bin/bootstrap.jar" fork="true">
-	        <jvmarg value="-Dcatalina.home=${appserver.home}"/>
+	    <java classname="org.apache.catalina.startup.Bootstrap" fork="true" classpathref="tomcat.class.path">
+	        <jvmarg value="-Dcatalina.home=${catalina-home}"/>
 	        <arg line="stop"/>
 	    </java>
 		<sleep seconds="2"/>
 	</target>
-
-	<target name="tomcat-check-status">
-		<echo>Checking to see if Tomcat is running on port ${appserver.port}</echo>
-	    <condition property="tomcat.started" value="true">
-	        <socket server="localhost" port="${appserver.port}"/>
-	    </condition>
-	</target>
-
+	
+	<target name="tomcat-start">
+		<echo>Starting Tomcat...</echo>
+	    <java classname="org.apache.catalina.startup.Bootstrap" fork="true" classpathref="tomcat.class.path">
+	        <jvmarg value="-Dcatalina.home=${catalina-home}"/>
+			<classpath>
+				<fileset dir="${catalina-home}/bin">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+	    </java>
+	</target>	
+	
 </project>
