@@ -46,7 +46,7 @@ public class ExecutionDao extends NamedParameterJdbcDaoSupport {
     	
     	// Check for a null order
     	Double orderPrice = null;
-    	if (order != null) {
+    	if (order != null && order.m_auxPrice > 0) {
     		orderPrice = order.m_auxPrice;
     	}
         
