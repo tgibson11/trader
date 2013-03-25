@@ -408,6 +408,7 @@ public class ClientService implements EWrapper {
 	}
 
 	public void commissionReport(CommissionReport commissionReport) {
-        throw new UnsupportedOperationException("commissionReport is not supported");		
+    	String msg = EWrapperMsgGenerator.commissionReport(commissionReport);
+    	messageService.addDataMessage(msg);
 	}
 }
