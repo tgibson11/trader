@@ -86,6 +86,7 @@ public class ExecutionService {
 		        order.m_totalQuantity = Math.abs(position);
 		        order.m_orderType = "MKT";
 		        order.m_tif = "GTC";
+		        order.m_auxPrice = 0;
 	          	if (position > 0) {
 	                order.m_action = "SELL";
 	          	} else {
@@ -102,6 +103,7 @@ public class ExecutionService {
 		        order.m_totalQuantity = Math.abs(position);
 		        order.m_orderType = "MKT";
 		        order.m_tif = "GTC";
+		        order.m_auxPrice = 0;
 	         	if (position > 0) {
 	                order.m_action = "BUY";
 	          	} else {
