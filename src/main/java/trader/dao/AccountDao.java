@@ -15,8 +15,6 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.stereotype.Repository;
 
-import trader.domain.Account;
-
 @Repository
 public class AccountDao extends NamedParameterJdbcDaoSupport {
 
@@ -27,26 +25,14 @@ public class AccountDao extends NamedParameterJdbcDaoSupport {
     	setDataSource(dataSource);
     }
 
-    public List<Account> getAccounts() {
+    public List<String> getAccounts() {
         logger.info("Getting accounts");
-        List<Account> accounts = getNamedParameterJdbcTemplate().query(
+        List<String> accounts = getNamedParameterJdbcTemplate().query(
         		" SELECT account_id" +
     			" FROM   account",
     			new MapSqlParameterSource(),
                 new AccountMapper());
         return accounts;
-    }
-    
-    public Account getAccount(String accountId) {
-    	logger.info("Getting account " + accountId);
-        Account account = getNamedParameterJdbcTemplate().queryForObject(
-        		" SELECT account_id" +
-    			" FROM   account" +
-    			" WHERE  account_id = :accountId",                
-    			new MapSqlParameterSource()
-				.addValue("accountId", accountId),
-				new AccountMapper());
-        return account;
     }
     
     public Double getAccountValue(String accountId) {
@@ -167,9 +153,9 @@ public class AccountDao extends NamedParameterJdbcDaoSupport {
     	logger.info("Rows affected: " + count);
     }
     
-    private class AccountMapper implements ParameterizedRowMapper<Account> {
-        public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
-        	return new Account(rs.getString("account_id"));
+    private class AccountMapper implements ParameterizedRowMapper<String> {
+        public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+        	return rs.getString("account_id");
         }
     }
         

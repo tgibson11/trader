@@ -2,17 +2,31 @@
 
 <h1>Trader</h1>
 
-<form:form>
+<form:form enctype="multipart/form-data">
   
-    <input type="submit" name="_connectTWS" value="Connect TWS" />
-    <input type="submit" name="_disconnectTWS" value="Disconnect TWS" />
-    <input type="submit" name="_checkRollovers" value="Check Rollovers" />
-    <input type="submit" name="_positionSizing" value="Position Sizing" />
-   
+    <input type="submit" name="action" value="Connect" />
+    <input type="submit" name="action" value="Disconnect" />
+    <input type="submit" name="action" value="Clear" />
+
+    <form:select path="account">
+    	<form:options items="${accounts}" />
+    </form:select>
+
+	<input type="file" name="file" accept=".csv" />
+	<input type="submit" name="action" value="Import" />
+	
+   	<form:errors path="*" cssClass="error" />
+	   
 </form:form>
 
 <div class="table">
-    <display:table name="info" >
+    <display:table name="actionItems" >
+        <display:column property="description" title="Action Items"></display:column>
+    </display:table>
+</div>
+
+<div class="table">
+    <display:table name="messages" >
         <display:column property="date" title="Messages &amp; Errors"></display:column>
         <display:column property="text" title="" maxLength="100"></display:column>
     </display:table>

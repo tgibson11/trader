@@ -29,4 +29,12 @@ public class MessageService {
 		return infoMessages;
 	}
 	
+	public void clearDataMessages() {
+		dataMessages.clear();
+	}
+	
+	public void clearInfoMessages() {
+		infoMessages.clear();
+	}
+	
 }

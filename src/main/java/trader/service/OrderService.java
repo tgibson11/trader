@@ -1,228 +1,414 @@
 package trader.service;
 
-import static trader.constants.Constants.LONG;
-import static trader.constants.Constants.SHORT;
+import static org.apache.commons.lang.StringUtils.isBlank;
+import static trader.constants.Constants.CONTRACT_CURRENCY_USD;
+import static trader.constants.Constants.CONTRACT_SEC_TYPE_FUTURE;
+import static trader.constants.Constants.FUTURES_MONTHS;
+import static trader.constants.Constants.ORDER_ACTION_BUY;
+import static trader.constants.Constants.ORDER_ACTION_SELL;
+import static trader.constants.Constants.ORDER_TIF_GTC;
+import static trader.constants.Constants.ORDER_TYPE_MKT;
+import static trader.constants.Constants.ORDER_TYPE_STOP;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang.math.Fraction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import trader.domain.Account;
-import trader.domain.ExtContract;
+import trader.domain.ActionItem;
 import trader.domain.ExtOrder;
-import trader.domain.Trade;
+import trader.domain.Position;
 
+import com.ib.client.Contract;
 import com.ib.client.Order;
 
 @Service
 public class OrderService {
 	
+	private static final String		FIELD_SEPARATOR 			= ",";
+	private static final Integer	FIELD_INDEX_ORDER_TYPE		= 0; 
+	private static final Integer	FIELD_INDEX_QUANTITY		= 1;
+	private static final Integer	FIELD_INDEX_BROKER_SYMBOL	= 3;
+	private static final Integer	FIELD_INDEX_MONTH			= 4;
+	private static final Integer	FIELD_INDEX_ORDER_PRICE		= 6;
+	private static final Integer	FIELD_INDEX_ROLL_INFO		= 7;
+//	private static final Integer	FIELD_INDEX_POSITION		= 12;
+//	private static final Integer	FIELD_INDEX_LAST_DATE 		= 15;
+	
+	// Orders file field values
+	private static final String		ORDER_TYPE_LONG_ENTRY		= "Long Entry";
+	private static final String		ORDER_TYPE_LONG_EXIT		= "Long Exit";
+	private static final String		ORDER_TYPE_SHORT_ENTRY		= "Short Entry";
+	private static final String		ORDER_TYPE_SHORT_EXIT		= "Short Exit";
+	
+	private static final OrderComparator	orderComparator 	= new OrderComparator();
+	
     protected final Log logger = LogFactory.getLog(getClass());
-
+    
+    private Map<Integer, ExtOrder> openOrders = new HashMap<Integer, ExtOrder>();
+    private Map<String, Position> openPositions = new HashMap<String, Position>();
+    
+    private List<ExtOrder> generatedOrders = new ArrayList<ExtOrder>();
+    private Set<String> rollovers = new HashSet<String>();
+    
+    private List<ActionItem> actionItems = new ArrayList<ActionItem>();
+    
     @Resource
-	private AccountService accountService;
-	
-	@Resource
-	private ClientService clientService;
-	
-	@Resource
-	private ContractService contractService;
-	
-	@Resource 
-	private MessageService messageService;
-	
-	@Resource
-	private TradeService tradeService;
-	
-	private Map<Integer, ExtOrder> openOrders = new HashMap<Integer, ExtOrder>();
+    private ContractService contractService;
 
-	public ExtOrder getOrder(int orderId) {
-		return openOrders.get(orderId);
-	}
-	
-	public void putOrder(String symbol, Order order) {
-		ExtOrder o = new ExtOrder();
-		o.m_orderId = order.m_orderId;
-        o.m_action = order.m_action;
-        o.m_totalQuantity = order.m_totalQuantity;
-        o.m_orderType = order.m_orderType;
-        o.m_tif = order.m_tif;
-        o.m_auxPrice = order.m_auxPrice;
-        o.m_account = order.m_account;
-		o.setSymbol(symbol);
-		openOrders.put(o.m_orderId, o);
-	}
- 	
-	public void removeOrder(int orderId) {
-		openOrders.remove(orderId);
-	}
-
-	public List<Order> getOpenOrders(String accountId, String symbol) {
-		logger.info("Getting open orders");
-		List<Order> orders = new ArrayList<Order>();
-		for (ExtOrder order : openOrders.values()) {
-			if (order.getSymbol().equals(symbol) && order.m_account.equals(accountId)) {
-				orders.add(order);
+	/**
+	 * Import orders from file
+	 * @param file
+	 * @param account
+	 * @throws IOException 
+	 */
+	public List<ActionItem> importOrders(MultipartFile file, String account) throws IOException {
+		
+		actionItems.clear();
+		
+		readOrdersFile(file, account);
+		List<ExtOrder> openOrders = new ArrayList<ExtOrder>(this.openOrders.values());
+		
+		// New orders = generated minus open
+		List<ExtOrder> newOrders = new ArrayList<ExtOrder>(generatedOrders);
+		newOrders.removeAll(openOrders);
+		
+		// Cancelled orders = open minus generated
+		List<ExtOrder> cancelledOrders = new ArrayList<ExtOrder>(openOrders);
+		cancelledOrders.removeAll(generatedOrders);
+		
+		// Combine and sort orders
+		List<ExtOrder> updatedOrders = new ArrayList<ExtOrder>(newOrders);
+		updatedOrders.addAll(cancelledOrders);
+		Collections.sort(updatedOrders, orderComparator);
+				
+		// Build list of action items
+		for (ExtOrder order : updatedOrders) {
+			ActionItem actionItem = new ActionItem();
+			
+			Contract contract = order.getContract();
+			String symbol = contract.m_symbol;
+			String expiry = contract.m_expiry;
+			boolean isNewOrder = (order.m_orderId == 0);
+			
+			String action = "Cancel order to ";
+			if (isNewOrder) {
+				action = "Place order to ";
 			}
+			
+			// Handle rollovers
+			if (rollovers.contains(symbol) && isNewOrder) {
+				ActionItem rollover = new ActionItem();
+				rollover.setDescription("Rollover " + symbol + " to " + expiry);
+
+				Position position = openPositions.get(symbol);
+				ExtOrder rolloverExit = createRolloverExit(position.getContract(), position.getQuantity(), account);
+				ExtOrder rolloverEntry = createRolloverEntry(contract, position.getQuantity(), account);
+
+				rollover.addOrder(rolloverExit);
+				rollover.addOrder(rolloverEntry);
+				
+				actionItems.add(rollover);
+				
+				rollovers.remove(symbol);
+			}
+			
+			actionItem.setDescription(action + order.m_action + " " + order.m_totalQuantity 
+					+ " " + symbol + " " + expiry + " " + " @ " + order.m_auxPrice);
+			
+			actionItem.addOrder(order);
+			
+			actionItems.add(actionItem);
 		}
-		return orders;
-	}
-	
-	public boolean isOrderFilled(Integer orderId, Integer cumQty) {
-		Order order = openOrders.get(orderId);
-		return (cumQty.equals(order.m_totalQuantity));
-	}
-	
-	public void updateOrders() {
-		for (Account account : accountService.getAccounts()) {
-			updateOrders(account.getAccountId());
-		}
-	}
-	
-	public void updateOrders(String accountId) {
-		accountService.calcUnitSizes(accountId);
-		for (ExtContract contract : contractService.getContracts()) {
-			updateOrders(accountId, contract);
-		}		
-		messageService.addInfoMessage("Orders updated for account " + accountId);
-	}
-	
-	public void cancelOrders(String accountId, ExtContract contract) {
-		cancelOrders(accountId, contract, null);
+		return actionItems;
 	}
 	
 	/**
-	 * Validates that all open positions from TRADE table
-	 * have at least one corresponding open order.
+	 * Reads records from file to generate a list of ContractOrder objects
+	 * @param file
+	 * @param account
+	 * @return
+	 * @throws IOException 
 	 */
-	public void validateOpenOrders() {
-		List<Trade> openTrades = tradeService.getOpenTrades(null, null);
-		for (Trade trade : openTrades) {
-			String accountId = trade.getAccountId();
-			String symbol = trade.getSymbol();
-			if (getOpenOrders(accountId, symbol).isEmpty()) {
-				String msg = "No order found! Account: " + accountId + "Symbol: " + symbol;
-				messageService.addInfoMessage(msg);
-			}
-		}
+	private void readOrdersFile(MultipartFile file, String account) throws IOException {
+
+		generatedOrders.clear();
+		rollovers.clear();
+		
+        DataInputStream in = new DataInputStream(file.getInputStream());
+        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+	        	        
+        String line;
+	    while ((line = br.readLine()) != null) {
+	    	
+	    	String[] fields = line.split(FIELD_SEPARATOR);
+
+            ExtOrder order = new ExtOrder();
+
+            // Order Type
+	    	String orderType = fields[FIELD_INDEX_ORDER_TYPE];
+	    	boolean exitOrder = false;
+	    	if (orderType.equals(ORDER_TYPE_LONG_ENTRY)) {
+	    		order.m_action = ORDER_ACTION_BUY;
+	    	} else if (orderType.equals(ORDER_TYPE_LONG_EXIT)) {
+	    		order.m_action = ORDER_ACTION_SELL;
+	    		exitOrder = true;
+	    	}  else if (orderType.equals(ORDER_TYPE_SHORT_ENTRY)) {
+	    		order.m_action = ORDER_ACTION_SELL;
+	    	}  else if (orderType.equals(ORDER_TYPE_SHORT_EXIT)) {
+	    		order.m_action = ORDER_ACTION_BUY;
+	    		exitOrder = true;
+	    	} else {
+	    		// Probably the header row: skip it
+	    		continue;
+	    	}
+	    	
+	    	Contract contract = new Contract();
+            contract.m_secType = CONTRACT_SEC_TYPE_FUTURE;
+            contract.m_currency = CONTRACT_CURRENCY_USD;
+	    	contract.m_symbol = fields[FIELD_INDEX_BROKER_SYMBOL];
+	    	contract.m_exchange = contractService.getExchange(contract.m_symbol);
+	    	contract.m_expiry = convertMonthToExpiry(fields[FIELD_INDEX_MONTH]);
+	    	
+	    	order.m_account = account;
+            order.m_orderType = ORDER_TYPE_STOP;
+            order.m_tif = ORDER_TIF_GTC;
+	    	
+	    	// Quantity
+	    	Position position = openPositions.get(contract.m_symbol);
+	    	if (exitOrder && position == null) {
+	    		// No position to exit: ignore this order
+	    		continue;
+	    	} else if (exitOrder) {
+	    		order.m_totalQuantity = Math.abs(position.getQuantity());
+	    	} else if (!exitOrder && position != null) {
+	    		// Already have a position: in which direction?
+	    		if (position.getQuantity() > 0 && order.m_action.equals(ORDER_ACTION_BUY)) {
+	    			// Already have a long position: ignore this order
+	    			continue;
+	    		} else if (position.getQuantity() < 0 && order.m_action.equals(ORDER_ACTION_SELL)) {
+	    			// Already have a short position: ignore this order
+	    			continue;
+	    		} else {
+			    	order.m_totalQuantity = Integer.parseInt(fields[FIELD_INDEX_QUANTITY]);
+	    		}
+	    	} else {
+		    	order.m_totalQuantity = Integer.parseInt(fields[FIELD_INDEX_QUANTITY]);
+	    	}
+	    		    	
+	    	// Order Price
+	    	Double priceFactor = contractService.getPriceFactor(contract.m_symbol);
+	    	order.m_auxPrice = parsePrice(fields[FIELD_INDEX_ORDER_PRICE]) * priceFactor;
+	    	
+	    	order.setContract(contract);
+	    	
+	    	// Roll Info
+	    	// Verify that there is actually an open position
+	    	if (!isBlank(fields[FIELD_INDEX_ROLL_INFO]) && openPositions.containsKey(contract.m_symbol)) {
+	    		rollovers.add(contract.m_symbol);
+	    	}
+	    	
+	    	generatedOrders.add(order);
+	    }
+        in.close();
+
 	}
 	
-	private void updateOrders(String accountId, ExtContract contract) {
+	/**
+	 * Creates an order to exit a position based 
+	 * @param order
+	 * @return
+	 */
+	private ExtOrder createRolloverExit(Contract contract, Integer position, String account) {
+        ExtOrder rolloverExit = new ExtOrder();
+        rolloverExit.m_account = account;
+        rolloverExit.m_orderType = ORDER_TYPE_MKT;
+        rolloverExit.m_tif = ORDER_TIF_GTC;
+
+        if (position > 0) {
+            rolloverExit.m_action = ORDER_ACTION_SELL;
+        } else {
+            rolloverExit.m_action = ORDER_ACTION_BUY;
+        }
+        
+        rolloverExit.m_totalQuantity = Math.abs(position);        
+    	rolloverExit.setContract(contract);    	
+    	return rolloverExit;
+    }
+	
+	/**
+	 * Creates an order to exit a position based 
+	 * @param order
+	 * @return
+	 */
+	private ExtOrder createRolloverEntry(Contract contract, Integer position, String account) {
+        ExtOrder rolloverEntry = new ExtOrder();
+        rolloverEntry.m_account = account;
+        rolloverEntry.m_orderType = ORDER_TYPE_MKT;
+        rolloverEntry.m_tif = ORDER_TIF_GTC;
+        
+        if (position > 0) {
+        	rolloverEntry.m_action = ORDER_ACTION_BUY;
+        } else {
+        	rolloverEntry.m_action = ORDER_ACTION_SELL;
+        }
+        
+        rolloverEntry.m_totalQuantity = Math.abs(position);        
+        rolloverEntry.setContract(contract);    	
+    	return rolloverEntry;
+    }
+	
+	/**
+	 * Convert a standard futures month (e.g., K3) to a TWS contract expiry string (YYYYMM)
+	 * @param futuresMonth
+	 * @return
+	 */
+	private String convertMonthToExpiry(String futuresMonth) {
+    	String monthLetter = futuresMonth.substring(0,1);
+		Integer yearLastDigit = Integer.parseInt(futuresMonth.substring(1));
 		
-		if (tradeService.getOpenTrades(accountId, contract.m_symbol).isEmpty()) {
-			if (accountService.getUnitSize(accountId, contract.m_symbol) == 0) {
-				cancelOrders(accountId, contract);
+		Integer year = Calendar.getInstance().get(Calendar.YEAR);		
+		
+		while(year % 10 != yearLastDigit) {
+			year++;
+		}
+		
+		return year.toString() + FUTURES_MONTHS.get(monthLetter);
+	}
+	
+	/**
+	 * Converts String s, which may consist of a decimal value or a fraction, to a Double.
+	 * @param s
+	 * @return
+	 */
+	private Double parsePrice(String s) {
+		Double price = null;
+		if (s.contains("/")) {
+			// String may contain leading spaces, which getFraction() doesn't like
+			s = s.trim();
+			// String may also look like "140 14.0/32h"
+			s = s.replace(".",	"");
+			s = s.replace("h", "0");
+			Fraction fraction = Fraction.getFraction(s);
+			price = fraction.doubleValue();
+		} else {
+			price = Double.parseDouble(s);
+		}
+		return price;
+	}
+	
+	/**
+	 * Clears the open orders map
+	 */
+	public void clearOpenOrders() {
+		openOrders.clear();
+	}
+	
+	/**
+	 * Builds an ExtOrder object from contract and order,
+	 * and adds that object to the open orders map
+	 * @param contract
+	 * @param order
+	 * @return
+	 */
+	public ExtOrder addOpenOrder(Contract contract, Order order) {
+		ExtOrder extOrder = new ExtOrder(contract, order);
+		return openOrders.put(order.m_orderId, extOrder);
+	}
+	
+	/**
+	 * Removes the specified order from the open orders map
+	 * @param orderId
+	 * @return
+	 */
+	public ExtOrder removeOpenOrder(Integer orderId) {
+		return openOrders.remove(orderId);
+	}
+	
+	/**
+	 * Builds a Position object from contract and quantity,
+	 * and adds that object to the open positions map.  Or, if
+	 * quantity = 0, it will remove the position from the map.
+	 * @param contract
+	 * @param quantity
+	 * @return
+	 */
+	public Position updatePosition(Contract contract, Integer quantity) {
+		Position position = null;
+		if (quantity != 0) {
+			position = new Position();
+			position.setContract(contract);
+			position.setQuantity(quantity);
+			openPositions.put(contract.m_symbol, position);
+		} else {
+			position = openPositions.remove(contract.m_symbol);
+		}
+		return position;
+	}
+	
+	/**
+	 * Returns the current list of action items
+	 * @return
+	 */
+	public List<ActionItem> getActionItems() {
+		return actionItems;
+	}
+	
+	/**
+	 * Sorts ExtOrders by symbol, action, and orderId
+	 * @author Todd
+	 *
+	 */
+	private static class OrderComparator implements Comparator<ExtOrder> {
+
+		@Override
+		public int compare(ExtOrder o1, ExtOrder o2) {
+						
+			if (o1.getContract() == null) {
+				if (o2.getContract() != null) {
+					return -1;
+				}
+			} else if (o2.getContract() == null) {
+				return 1;
+			} else if (o1.getContract().m_symbol == null) {
+				if (o2.getContract().m_symbol != null) {
+					return -1;
+				}
 			} else {
-				if (tradeService.isLoaded(accountId, contract, LONG)) {
-					cancelOrders(accountId, contract, "BUY");
-				} else {
-					updateEntryOrder(accountId, contract, "BUY");
-				}
-				if (tradeService.isLoaded(accountId, contract, SHORT)) {
-					cancelOrders(accountId, contract, "SELL");
-				} else {
-					updateEntryOrder(accountId, contract, "SELL");
+				int result = o1.getContract().m_symbol.compareTo(o2.getContract().m_symbol);
+				if (result != 0) {
+					return result;
+				} else if (o1.m_action == null) {
+					if (o2.m_action != null) {
+						return -1;
+					}
+				} else { 
+					result = o1.m_action.compareTo(o2.m_action);
+					if (result != 0) {
+						return result;
+					}
 				}
 			}
-		} else {
-			if (tradeService.getPosition(accountId, contract.m_symbol) > 0) {
-				if (tradeService.isLoaded(accountId, contract, LONG)) {
-					cancelOrders(accountId, contract, "BUY");
-				}
-				updateStopOrder(accountId, contract, "SELL");
-			} else {
-				if (tradeService.isLoaded(accountId, contract, SHORT)) {
-					cancelOrders(accountId, contract, "SELL");
-				}
-				updateStopOrder(accountId, contract, "BUY");
-			}
-		}		
-	}
-	
-	private void updateEntryOrder(String accountId, ExtContract contract, String action) {
-
-		Double price;
-		if (action.equals("BUY")) {
-			price = contract.getEntryHigh() + contract.getTickSize();
-		} else {
-			price = contract.getEntryLow() - contract.getTickSize();
+			return Integer.valueOf(o2.m_orderId).compareTo(o1.m_orderId);
 		}
 		
-		int unitSize = accountService.getUnitSize(accountId, contract.m_symbol);
-		
-		boolean orderExists = false;
-		for (Order order : getOpenOrders(accountId, contract.m_symbol)) {
-			if (order.m_action.equals(action)) {
-				if (order.m_totalQuantity == unitSize
-						&& Math.abs(order.m_auxPrice - price) < contract.getTickSize()) {
-					orderExists = true;
-				} else {
-					clientService.cancelOrder(contract, order);
-					removeOrder(order.m_orderId);
-				}
-			}
-		}
-
-		if (!orderExists) {
-            Order order = new Order();
-            order.m_account = accountId;
-            order.m_action = action;
-            order.m_totalQuantity = unitSize;
-            order.m_orderType = "STP";
-            order.m_tif = "GTC";
-            order.m_auxPrice = price;            
-			clientService.placeOrder(contract, order);
-		}
-	}
-	
-	private void updateStopOrder(String accountId, ExtContract contract, String action) {
-		logger.info("Updating stop order");
-		Double price;
-		if (action.equals("BUY")) {
-			price = contract.getExitHigh() + contract.getTickSize();
-		} else {
-			price = contract.getExitLow() - contract.getTickSize();
-		}
-
-		int quantity = 0;
-		for (Order order : getOpenOrders(accountId, contract.m_symbol)) {
-			if (order.m_action.equals(action)) {
-				if ((action.equals("BUY") && (order.m_auxPrice - price) > contract.getTickSize())
-						|| (action.equals("SELL") && (price - order.m_auxPrice) > contract.getTickSize())) {
-					quantity += order.m_totalQuantity;
-					clientService.cancelOrder(contract, order);
-					removeOrder(order.m_orderId);
-				}
-			}
-		}
-		
-		if (quantity > 0) {
-            Order order = new Order();
-            order.m_account = accountId;
-            order.m_action = action;
-            order.m_totalQuantity = quantity;
-            order.m_orderType = "STP";
-            order.m_tif = "GTC";
-            order.m_auxPrice = price;            
-			clientService.placeOrder(contract, order);
-		}
-	}
-	
-	private void cancelOrders(String accountId, ExtContract contract, String action) {
-		logger.info("Canceling " + action + " orders");
-		for (Order order : getOpenOrders(accountId, contract.m_symbol)) {
-			if (order.m_action.equals(action) || action == null) {
-				clientService.cancelOrder(contract, order);
-				removeOrder(order.m_orderId);
-			}
-		}
 	}
 	
 }

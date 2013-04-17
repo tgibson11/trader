@@ -1,6 +1,7 @@
 package trader.controller;
 
 import static trader.constants.Constants.CSS_CLASS_SELECTED;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
@@ -45,7 +46,7 @@ public class PerformanceController extends SimpleFormController {
     	if (accountId != null) {
     		command.setAccountId(accountId);
     	} else {
-        	command.setAccountId(accountService.getAccounts().get(0).getAccountId());
+        	command.setAccountId(accountService.getAccounts().get(0));
     	}
     	return command;
     }

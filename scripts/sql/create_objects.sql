@@ -23,28 +23,14 @@ CREATE TABLE correlation
   (symbol            VARCHAR(3) NOT NULL, 
    correlated_symbol VARCHAR(3) NOT NULL,
    correlation_type  VARCHAR(4) NOT NULL,
-   CONSTRAINT correlation_pk  PRIMARY KEY (symbol, correlated_symbol),
-   CONSTRAINT correlation_fk1 FOREIGN KEY (symbol)            REFERENCES contract (symbol),
-   CONSTRAINT correlation_fk2 FOREIGN KEY (correlated_symbol) REFERENCES contract (symbol))
+   CONSTRAINT correlation_pk  PRIMARY KEY (symbol, correlated_symbol))
   ENGINE=InnoDB;
    
 CREATE TABLE contract
-  (symbol        VARCHAR(3)    NOT NULL PRIMARY KEY,
-   exchange_id   INTEGER       NOT NULL,    
-   underlying_id INTEGER       NOT NULL,
-   multiplier    NUMERIC(10,1) NOT NULL,
-   tick_size     NUMERIC(10,6) NOT NULL,
-   cents_flag    NUMERIC(1)    NOT NULL,
-   active_flag   NUMERIC(1)    NOT NULL,
-   expiry        VARCHAR(6),
-   atr           NUMERIC(10,6),
-   entry_high    NUMERIC(10,6),
-   entry_low     NUMERIC(10,6),
-   exit_high     NUMERIC(10,6),
-   exit_low      NUMERIC(10,6),
-   open_interest_url VARCHAR(1000),
-   CONSTRAINT contract_fk1 FOREIGN KEY (exchange_id)   REFERENCES exchange (exchange_id),
-   CONSTRAINT contract_fk2 FOREIGN KEY (underlying_id) REFERENCES underlying (underlying_id))
+  (symbol				VARCHAR(3)	NOT NULL PRIMARY KEY,
+   exchange				VARCHAR(20)	NOT NULL,
+   price_factor			DOUBLE		NOT NULL DEFAULT 1,
+   prior_month_expriry	NUMERIC(1)	NOT NULL DEFAULT 0)
   ENGINE=InnoDB;
 
 CREATE TABLE account_contract
@@ -52,8 +38,7 @@ CREATE TABLE account_contract
    symbol     VARCHAR(3)  NOT NULL,
    unit_size  INTEGER     NOT NULL,
    CONSTRAINT account_contract_pk  PRIMARY KEY (account_id, symbol),
-   CONSTRAINT account_contract_fk1 FOREIGN KEY (account_id) REFERENCES account (account_id),
-   CONSTRAINT account_contract_fk2 FOREIGN KEY (symbol)     REFERENCES contract (symbol))
+   CONSTRAINT account_contract_fk1 FOREIGN KEY (account_id) REFERENCES account (account_id))
   ENGINE=InnoDB;
 
 CREATE TABLE account_hist
@@ -76,15 +61,13 @@ CREATE TABLE trade
    stop_price  NUMERIC(10,6) NOT NULL,
    exit_dt     DATE, 
    exit_price  NUMERIC(10,6), 
-   CONSTRAINT trade_fk1 FOREIGN KEY (account_id) REFERENCES account (account_id),
-   CONSTRAINT trade_fk2 FOREIGN KEY (symbol)     REFERENCES contract (symbol))
+   CONSTRAINT trade_fk1 FOREIGN KEY (account_id) REFERENCES account (account_id))
   ENGINE=InnoDB;
    
 CREATE TABLE contract_month
   (symbol   VARCHAR(3)  NOT NULL,
    month    VARCHAR(2)  NOT NULL,
-   CONSTRAINT contract_month_pk  PRIMARY KEY (symbol, month),
-   CONSTRAINT contract_month_fk1 FOREIGN KEY (symbol) REFERENCES contract (symbol))
+   CONSTRAINT contract_month_pk  PRIMARY KEY (symbol, month))
   ENGINE=InnoDB;
   
 CREATE TABLE execution (
@@ -97,7 +80,6 @@ CREATE TABLE execution (
 	quantity        INTEGER			NOT NULL,
 	price			NUMERIC(10,6)	NOT NULL,
 	order_price		NUMERIC(10,6),
-	CONSTRAINT execution_fk1	FOREIGN KEY (account_id)	REFERENCES account (account_id),
-	CONSTRAINT execution_fk2	FOREIGN KEY (symbol)		REFERENCES contract (symbol))
+	CONSTRAINT execution_fk1	FOREIGN KEY (account_id)	REFERENCES account (account_id))
 	ENGINE=InnoDB;
 	

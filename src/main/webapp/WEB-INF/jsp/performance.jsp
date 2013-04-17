@@ -5,8 +5,7 @@
 <form:form id="performanceForm">
     <div>
         <label for="accountId">Account:</label>
-        <form:select path="accountId" id="accountId" items="${accounts}" itemLabel="accountId" itemValue="accountId"
-                onchange="document.getElementById('performanceForm').submit;" />
+        <form:select path="accountId" id="accountId" items="${accounts}" onchange="document.getElementById('performanceForm').submit;" />
     </div>
     <div>
         <fieldset>

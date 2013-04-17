@@ -16,7 +16,6 @@
 		    <ul>
 		        <li class="${homeClass}"><a href="<c:url value="home" />">Home</a></li>
 		        <li class="${performanceClass}"><a href="<c:url value="performance" />">Performance</a></li>
-		        <li class="${rolloverClass}"><a href="<c:url value="rollover" />">Rollover</a></li>
 		        <li class="${logClass}"><a href="<c:url value="log" />">Log</a></li>
 		    </ul>	
 		</div>        

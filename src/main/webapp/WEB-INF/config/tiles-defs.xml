@@ -20,8 +20,4 @@
         <put-attribute name="body" value="/WEB-INF/jsp/performance.jsp" />
     </definition>
 
-    <definition name="rollover" extends="standardLayout">
-        <put-attribute name="body" value="/WEB-INF/jsp/rollover.jsp" />
-    </definition>
-
 </tiles-definitions>
