@@ -406,7 +406,7 @@ public class OrderService {
 					}
 				}
 			}
-			return Integer.valueOf(o2.m_orderId).compareTo(o1.m_orderId);
+			return Integer.valueOf(Math.abs(o2.m_orderId)).compareTo(Math.abs(o1.m_orderId));
 		}
 		
 	}
