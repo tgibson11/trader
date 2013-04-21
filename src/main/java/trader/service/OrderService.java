@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.annotation.Resource;
@@ -72,6 +73,9 @@ public class OrderService {
     
     @Resource
     private ContractService contractService;
+    
+    @Resource
+    private TwsApiService twsApiService;
 
 	/**
 	 * Import orders from file
@@ -138,6 +142,39 @@ public class OrderService {
 			actionItems.add(actionItem);
 		}
 		return actionItems;
+	}
+	
+	/**
+	 * For each action item referenced by an actionItemIndices key,
+	 * if the value is true, process the action item's orders. 
+	 * If value is false, remove the action item from the list.
+	 * 
+	 * When processing orders, if the order has a non-zero orderId, 
+	 * it is an existing order to be cancelled.  If the orderId is 0, 
+	 * it is a new order to be placed. 
+	 * 
+	 * @param actionItemIndices
+	 */
+	public void processActionItems(Map<Integer, Boolean> actionItemIndices) {
+		
+		for (Entry<Integer, Boolean> entry : actionItemIndices.entrySet()) {
+			
+			int actionItemIndex = entry.getKey();
+			boolean isExecute = entry.getValue(); 
+			
+			if (isExecute) {
+				for (ExtOrder order : actionItems.get(actionItemIndex).getOrders()) {
+					if (order.m_orderId == 0) {
+						// This is a new order...place it
+						twsApiService.placeOrder(order.getContract(), order);
+					} else {
+						// This is an existing order...cancel it
+						twsApiService.cancelOrder(order.getContract(), order);
+					}
+				}
+			}				
+			actionItems.remove(actionItemIndex);
+		}
 	}
 	
 	/**
@@ -372,7 +409,9 @@ public class OrderService {
 	}
 	
 	/**
-	 * Sorts ExtOrders by symbol, action, and orderId
+	 * Sorts ExtOrders by symbol, action, and the absolute value of orderId (descending).
+	 * For orderId, non-zero values are first, indicating orders to be canceled.
+	 * Using the absolute value because orders entered directly in TWS will have a negative orderId.
 	 * @author Todd
 	 *
 	 */

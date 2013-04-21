@@ -87,7 +87,7 @@ public class TwsApiService implements EWrapper {
             nextOrderId++;
     	}
     	
-        client.placeOrder(order.m_orderId, contract, order);        
+         client.placeOrder(order.m_orderId, contract, order);        
     }
 
     /**
@@ -99,7 +99,7 @@ public class TwsApiService implements EWrapper {
         String msg = "Canceling order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ " + order.m_auxPrice + " for " + order.m_account;
         messageService.addInfoMessage(msg);
         
-        client.cancelOrder(order.m_orderId);
+         client.cancelOrder(order.m_orderId);
     }
     
     /**

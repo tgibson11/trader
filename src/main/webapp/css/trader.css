@@ -69,9 +69,6 @@ th, td {
 #performanceTable td {
     text-align: right;
 }
-#performanceTable .left-align {
-	text-align: left;
-}
 #performanceSummary {
     border-spacing: 0;
     border-collapse: collapse;
@@ -102,11 +99,18 @@ label {
 	padding-top: 0.5em;
 	width: 4em;
 }
-.right-align {
+.align-left {
+	text-align: left;
+}
+.align-center {
+	text-align: center;
+}
+.align-right {
     text-align: right;
 }
 .error { 
 	color: red;
 }
+
 
 

@@ -1,6 +1,8 @@
 package trader.command;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,6 +13,7 @@ public class ImportOrdersCommand implements Serializable {
 	private String action;
 	private String account;
 	private MultipartFile file;
+	private Map<Integer, Boolean> submittedActionItems = new HashMap<Integer, Boolean>();
 
 	public String getAction() {
 		return action;
@@ -34,6 +37,14 @@ public class ImportOrdersCommand implements Serializable {
 
 	public void setFile(MultipartFile file) {
 		this.file = file;
+	}
+
+	public Map<Integer, Boolean> getSubmittedActionItems() {
+		return submittedActionItems;
+	}
+
+	public void setSubmittedActionItems(Map<Integer, Boolean> submittedActionItems) {
+		this.submittedActionItems = submittedActionItems;
 	}
 
 }

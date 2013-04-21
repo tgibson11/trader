@@ -32,8 +32,9 @@ public class HomeController {
 	private static final String VIEW = "home";
 	private static final String	ACTION_CONNECT = "connect";
 	private static final String	ACTION_DISCONNECT = "disconnect";
-	private static final String	ACTION_CLEAR = "clear";
-	private static final String	ACTION_IMPORT = "import";
+	private static final String	ACTION_CLEAR = "clear messages";
+	private static final String	ACTION_IMPORT = "import orders";
+	private static final String	ACTION_SUBMIT = "submit action items";
 	
     protected final Log logger = LogFactory.getLog(getClass());
     
@@ -67,24 +68,39 @@ public class HomeController {
 	@RequestMapping(value = "home", method = RequestMethod.POST)
     public String onSubmit(@ModelAttribute("command") ImportOrdersCommand command, BindingResult bindingResult, Model model) throws IOException {
     	
-		if (isBlank(command.getAction())) {
+		String action = command.getAction();
+		if (isBlank(action)) {
+			
     		logger.info("No action specified...");
-		} else if (command.getAction().equalsIgnoreCase(ACTION_CONNECT)) {
-    		logger.info("Connecting to TWS...");
+    		
+		} else if (action.equalsIgnoreCase(ACTION_CONNECT)) {
+    		
+			logger.info("Connecting to TWS...");
     		twsApiService.connect();
-		} else if (command.getAction().equalsIgnoreCase(ACTION_DISCONNECT)) {
-    		logger.info("Disconnecting from TWS...");
+    		
+		} else if (action.equalsIgnoreCase(ACTION_DISCONNECT)) {
+    		
+			logger.info("Disconnecting from TWS...");
     		twsApiService.disconnect();
-		} else if (command.getAction().equalsIgnoreCase(ACTION_CLEAR)) {
-    		logger.info("Clearing messages...");
+    		
+		} else if (action.equalsIgnoreCase(ACTION_CLEAR)) {
+    		
+			logger.info("Clearing messages...");
     		messageService.clearInfoMessages();
-		} else if (command.getAction().equalsIgnoreCase(ACTION_IMPORT)) {
-    		logger.info("Import requested...");
+    		
+		} else if (action.equalsIgnoreCase(ACTION_IMPORT)) {
+    		
+			logger.info("Import requested...");
     		importOrders(command, bindingResult);
+    		
+    	} else if (action.equalsIgnoreCase(ACTION_SUBMIT)) {
+    		
+    		logger.info("Processing action items...");
+    		orderService.processActionItems(command.getSubmittedActionItems());
     	}
     	
     	logger.info("Returning to " + VIEW);   	
-        return showForm(command, model);
+        return "redirect:" + VIEW;
     }
 	
 	/**

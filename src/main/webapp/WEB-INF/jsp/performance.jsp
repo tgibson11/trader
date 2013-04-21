@@ -28,7 +28,7 @@
 
 <div class="table">
     <display:table id="performanceTable" name="performanceData" requestURI="performance" sort="list" defaultsort="1" defaultorder="descending">
-     <display:column property="date" title="Month" decorator="trader.support.display.tag.MonthYearColumnDecorator" sortable="true" class="left-align" />
+     <display:column property="date" title="Month" decorator="trader.support.display.tag.MonthYearColumnDecorator" sortable="true" class="align-left" />
      <display:column property="bnav" title="BNAV" decorator="trader.support.display.tag.CurrencyColumnDecorator" sortable="true" />
      <display:column property="deposits" title="Additions" decorator="trader.support.display.tag.CurrencyColumnDecorator" sortable="true" />
      <display:column property="withdrawals" title="Withdrawals" decorator="trader.support.display.tag.CurrencyColumnDecorator" sortable="true" />
