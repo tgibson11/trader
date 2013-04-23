@@ -156,14 +156,17 @@ public class OrderService {
 	 * @param actionItemIndices
 	 */
 	public void processActionItems(Map<Integer, Boolean> actionItemIndices) {
+	
+		List<ActionItem> processedActionItems = new ArrayList<ActionItem>(); 
 		
 		for (Entry<Integer, Boolean> entry : actionItemIndices.entrySet()) {
 			
 			int actionItemIndex = entry.getKey();
-			boolean isExecute = entry.getValue(); 
+			boolean isExecute = entry.getValue();
+			ActionItem actionItem = actionItems.get(actionItemIndex);
 			
 			if (isExecute) {
-				for (ExtOrder order : actionItems.get(actionItemIndex).getOrders()) {
+				for (ExtOrder order : actionItem.getOrders()) {
 					if (order.m_orderId == 0) {
 						// This is a new order...place it
 						twsApiService.placeOrder(order.getContract(), order);
@@ -172,9 +175,11 @@ public class OrderService {
 						twsApiService.cancelOrder(order.getContract(), order);
 					}
 				}
-			}				
-			actionItems.remove(actionItemIndex);
+			}
+			processedActionItems.add(actionItem);
 		}
+		
+		actionItems.removeAll(processedActionItems);
 	}
 	
 	/**
