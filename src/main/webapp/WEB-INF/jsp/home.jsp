@@ -17,26 +17,29 @@
    	<form:errors path="*" cssClass="error" />
 	   
 	<div class="table">
-		    <display:table name="actionItems" uid="actionItem">
-		        <display:column property="description" title="Action Items"></display:column>
-		        <display:column title="Ignore" class="align-center">
-		        	<form:radiobutton path="submittedActionItems[${actionItem_rowNum - 1}]" value="false" />
-		        </display:column>
-		        <display:column title="Execute" class="align-center">
-		        	<form:radiobutton path="submittedActionItems[${actionItem_rowNum - 1}]" value="true" />
-		        </display:column>
-		    </display:table>
+	    <display:table name="actionItems" uid="actionItem">
+	        <display:column property="description" title="Action Items"></display:column>
+	        <display:column title="Ignore" class="align-center">
+	        	<form:radiobutton path="submittedActionItems[${actionItem_rowNum - 1}]" value="false" />
+	        </display:column>
+	        <display:column title="Execute" class="align-center">
+	        	<form:radiobutton path="submittedActionItems[${actionItem_rowNum - 1}]" value="true" />
+	        </display:column>
+	    </display:table>
 	</div>
-	<input type="submit" name="action" value="Submit Action Items" />
-	<input type="button" id="clear-action-items" value="Clear Selected Action Items" />
-
+	<div>
+		<input type="submit" name="action" value="Submit Action Items" />
+		<input type="button" id="clear-action-items" value="Clear Selected Action Items" />
+	</div>
+	<div>
+		<input type="submit" name="action" value="Clear Messages" />
+	</div>
 	<div class="table">
 	    <display:table name="messages" >
 	        <display:column property="date" title="Messages &amp; Errors"></display:column>
 	        <display:column property="text" title="" maxLength="100"></display:column>
 	    </display:table>
 	</div> 
-	<input type="submit" name="action" value="Clear Messages" />
 	
 </form:form>
 
