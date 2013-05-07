@@ -6,6 +6,7 @@
   
     <input type="submit" name="action" value="Connect" />
     <input type="submit" name="action" value="Disconnect" />
+	<input type="submit" name="action" value="Clear Messages" />
 
     <form:select path="account">
     	<form:options items="${accounts}" />
@@ -27,13 +28,10 @@
 	        </display:column>
 	    </display:table>
 	</div>
-	<div>
-		<input type="submit" name="action" value="Submit Action Items" />
-		<input type="button" id="clear-action-items" value="Clear Selected Action Items" />
-	</div>
-	<div>
-		<input type="submit" name="action" value="Clear Messages" />
-	</div>
+
+	<input type="submit" name="action" value="Submit Action Items" />
+	<input type="button" id="clear-action-items" value="Clear Selected Action Items" />
+
 	<div class="table">
 	    <display:table name="messages" >
 	        <display:column property="date" title="Messages &amp; Errors"></display:column>
