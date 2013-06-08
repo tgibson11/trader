@@ -262,9 +262,16 @@ public class OrderService {
 	    	order.setContract(contract);
 	    	
 	    	// Roll Info
-	    	// Verify that there is actually an open position
-	    	if (!isBlank(fields[FIELD_INDEX_ROLL_INFO]) && openPositions.containsKey(contract.m_symbol)) {
-	    		rollovers.add(contract.m_symbol);
+	    	if (!isBlank(fields[FIELD_INDEX_ROLL_INFO])) {
+	    		Position openPosition = openPositions.get(contract.m_symbol);
+	    		// Is there an open position?
+	    		if (openPosition != null) {
+	    			// Does the open position needs to be rolled over?
+		    		String openPositionExpiry = openPosition.getContract().m_expiry;
+		    		if (!openPositionExpiry.equals(contract.m_expiry)) {
+			    		rollovers.add(contract.m_symbol);
+		    		}
+	    		}
 	    	}
 	    	
 	    	generatedOrders.add(order);
