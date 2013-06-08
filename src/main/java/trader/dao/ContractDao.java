@@ -26,12 +26,17 @@ public class ContractDao extends NamedParameterJdbcDaoSupport {
 	 * @return
 	 */	
     public String getExchange(String symbol) {
-		return getNamedParameterJdbcTemplate().queryForObject(
-				" SELECT exchange" +
-				" FROM trd.contract" +
-				" WHERE symbol = :symbol", 
-				new MapSqlParameterSource("symbol", symbol), 
-				String.class);
+    	try {
+			return getNamedParameterJdbcTemplate().queryForObject(
+					" SELECT exchange" +
+					" FROM trd.contract" +
+					" WHERE symbol = :symbol", 
+					new MapSqlParameterSource("symbol", symbol), 
+					String.class);
+		} catch (EmptyResultDataAccessException e) {
+			// Legacy contacts may not be defined in the contract table
+			return null;
+		}
 	}
     
 	/**
