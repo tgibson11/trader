@@ -177,15 +177,18 @@ public class TwsApiService implements EWrapper {
     		contract.m_expiry = year + month;  		
     	} 
 
-    	orderService.addOpenOrder(contract, order);
+		// Also, the contract doesn't always have the exchange set
+		contract.m_exchange = contractService.getExchange(contract.m_symbol);
+
+		orderService.addOpenOrder(contract, order);
     	
         // Update nextOrderId if TWS has messed it up somehow
         if (orderId >= nextOrderId) {
         	nextOrderId = orderId + 1;
         } 
         
-        // Temporary: if no order ID, copy the order
-        // Will need to delete the original order manually
+        // If no order ID (i.e, the order was entered manually), re-enter it
+        // The original order will have to be deleted manually
         if (orderId == 0) {
         	messageService.addInfoMessage("Copying order with orderId = 0.  Delete the original in TWS.");
         	placeOrder(contract, order);
