@@ -177,9 +177,6 @@ public class TwsApiService implements EWrapper {
     		contract.m_expiry = year + month;  		
     	} 
 
-		// Also, the contract doesn't always have the exchange set
-		contract.m_exchange = contractService.getExchange(contract.m_symbol);
-
 		orderService.addOpenOrder(contract, order);
     	
         // Update nextOrderId if TWS has messed it up somehow
@@ -219,6 +216,9 @@ public class TwsApiService implements EWrapper {
     	String msg = EWrapperMsgGenerator.updatePortfolio(contract, position, marketPrice, marketValue, averageCost, unrealizedPNL, realizedPNL, accountName);
     	messageService.addDataMessage(msg);
     	
+		// Apparently the contract doesn't always have the exchange set
+		contract.m_exchange = contractService.getExchange(contract.m_symbol);
+
     	orderService.updatePosition(contract, position);
     }
 
