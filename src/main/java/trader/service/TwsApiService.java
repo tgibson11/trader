@@ -177,7 +177,10 @@ public class TwsApiService implements EWrapper {
     		contract.m_expiry = year + month;  		
     	} 
 
-		orderService.addOpenOrder(contract, order);
+    	// Changing the expiry and also having a contract ID set causes a conflict... 
+    	contract.m_conId = 0;
+
+    	orderService.addOpenOrder(contract, order);
     	
         // Update nextOrderId if TWS has messed it up somehow
         if (orderId >= nextOrderId) {
