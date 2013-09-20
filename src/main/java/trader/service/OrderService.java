@@ -411,7 +411,7 @@ public class OrderService {
 			position = new Position();
 			position.setContract(contract);
 			position.setQuantity(quantity);
-			openPositions.put(contract.m_symbol, position);
+			openPositions.put(account + contract.m_symbol, position);
 		} else {
 			position = openPositions.remove(account + contract.m_symbol);
 		}
