@@ -88,7 +88,12 @@ public class OrderService {
 		actionItems.clear();
 		
 		readOrdersFile(file, account);
-		List<ExtOrder> openOrders = new ArrayList<ExtOrder>(this.openOrders.values());
+		List<ExtOrder> openOrders = new ArrayList<ExtOrder>();
+		for (ExtOrder order : this.openOrders.values()) {
+			if (order.m_account.equals(account)) {
+				openOrders.add(order);
+			}
+		}
 		
 		// New orders = generated minus open
 		List<ExtOrder> newOrders = new ArrayList<ExtOrder>(generatedOrders);
@@ -122,7 +127,7 @@ public class OrderService {
 				ActionItem rollover = new ActionItem();
 				rollover.setDescription("Rollover " + symbol + " to " + expiry);
 
-				Position position = openPositions.get(symbol);
+				Position position = openPositions.get(account + symbol);
 				ExtOrder rolloverExit = createRolloverExit(position.getContract(), position.getQuantity(), account);
 				ExtOrder rolloverEntry = createRolloverEntry(contract, position.getQuantity(), account);
 
@@ -234,7 +239,7 @@ public class OrderService {
             order.m_tif = ORDER_TIF_GTC;
 	    	
 	    	// Quantity
-	    	Position position = openPositions.get(contract.m_symbol);
+	    	Position position = openPositions.get(account + contract.m_symbol);
 	    	if (exitOrder && position == null) {
 	    		// No position to exit: ignore this order
 	    		continue;
@@ -263,7 +268,7 @@ public class OrderService {
 	    	
 	    	// Roll Info
 	    	if (!isBlank(fields[FIELD_INDEX_ROLL_INFO])) {
-	    		Position openPosition = openPositions.get(contract.m_symbol);
+	    		Position openPosition = openPositions.get(account + contract.m_symbol);
 	    		// Is there an open position?
 	    		if (openPosition != null) {
 	    			// Does the open position needs to be rolled over?
@@ -396,10 +401,11 @@ public class OrderService {
 	 * and adds that object to the open positions map.  Or, if
 	 * quantity = 0, it will remove the position from the map.
 	 * @param contract
+	 * @param account
 	 * @param quantity
 	 * @return
 	 */
-	public Position updatePosition(Contract contract, Integer quantity) {
+	public Position updatePosition(Contract contract, String account, Integer quantity) {
 		Position position = null;
 		if (quantity != 0) {
 			position = new Position();
@@ -407,7 +413,7 @@ public class OrderService {
 			position.setQuantity(quantity);
 			openPositions.put(contract.m_symbol, position);
 		} else {
-			position = openPositions.remove(contract.m_symbol);
+			position = openPositions.remove(account + contract.m_symbol);
 		}
 		return position;
 	}

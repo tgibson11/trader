@@ -222,7 +222,7 @@ public class TwsApiService implements EWrapper {
 		// Apparently the contract doesn't always have the exchange set
 		contract.m_exchange = contractService.getExchange(contract.m_symbol);
 
-    	orderService.updatePosition(contract, position);
+    	orderService.updatePosition(contract, accountName, position);
     }
 
     public void updateAccountTime(String timeStamp) {
