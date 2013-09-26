@@ -15,6 +15,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.stereotype.Repository;
 
+import trader.domain.Account;
+
 @Repository
 public class AccountDao extends NamedParameterJdbcDaoSupport {
 
@@ -25,29 +27,15 @@ public class AccountDao extends NamedParameterJdbcDaoSupport {
     	setDataSource(dataSource);
     }
 
-    public List<String> getAccounts() {
+    public List<Account> getAccounts() {
         logger.info("Getting accounts");
-        List<String> accounts = getNamedParameterJdbcTemplate().query(
-        		" SELECT account_id" +
-    			" FROM   account",
+        List<Account> accounts = getNamedParameterJdbcTemplate().query(
+        		" SELECT account_id, account_name, default_flag" +
+    			" FROM   account" +
+    			" ORDER BY default_flag DESC, account_id",
     			new MapSqlParameterSource(),
                 new AccountMapper());
         return accounts;
-    }
-    
-    public Double getAccountValue(String accountId) {
-    	logger.info("Getting value of account" + accountId);
-        return getNamedParameterJdbcTemplate().queryForObject(
-        		" SELECT value" +
-    			" FROM   account_hist" +
-    			" WHERE  account_id = :accountId" +
-    			" AND    date =" +
-    			"   (SELECT MAX(date)" +
-    			"    FROM   account_hist" +
-    			"    WHERE account_id = :accountId)",
-                new MapSqlParameterSource()
-        			.addValue("accountId", accountId),
-				Double.class);
     }
     
     public void insertAccountHist(String accountId, Double value) {   	
@@ -81,81 +69,13 @@ public class AccountDao extends NamedParameterJdbcDaoSupport {
         return count;
     }
 
-    public int getUnitSize(String accountId, String symbol) {
-        logger.info("Getting unit size: " + accountId + ", " + symbol);
-        int unitSize = getNamedParameterJdbcTemplate().queryForInt(
-        		" SELECT unit_size" +
-    			" FROM   account_contract" +
-    			" WHERE  account_id = :accountId" +
-    			" AND    symbol = :symbol",
-                new MapSqlParameterSource()
-        			.addValue("accountId", accountId)
-                	.addValue("symbol", symbol));
-        return unitSize;
-    }
-
-    public void updateUnitSize(String accountId, String symbol, int unitSize) {
-        logger.info("Updating accountContract: " + accountId + ", " + symbol);
-        int count = getNamedParameterJdbcTemplate().update(
-        		" UPDATE account_contract" +
-                " SET    unit_size = :unitSize" +
-                " WHERE  account_id = :accountId" +
-                " AND    symbol = :symbol",
-            new MapSqlParameterSource()
-        		.addValue("unitSize", unitSize)
-                .addValue("accountId", accountId)
-                .addValue("symbol", symbol));
-        logger.info("Rows affected: " + count);
-    }
-    
-    public void adjustUnitSizes(String accountId) {
-		// Set unit size to 0 when an open trade exists in another contract for the same commodity
-    	logger.info("Adjusting unit sizes (1): " + accountId);
-    	int count = getNamedParameterJdbcTemplate().update(
-    			" UPDATE account_contract ac" +
-    			" SET    unit_size = 0" +
-    			" WHERE  account_id = :accountId" +
-    			" AND    unit_size > 0" +
-    			" AND EXISTS" +
-    			"   (SELECT 1" +
-    			"    FROM   contract c1," +
-    			"           contract c2," +
-    			"           trade t" +
-    			"    WHERE  c1.symbol = ac.symbol" +
-    			"    AND    c2.underlying_id = c1.underlying_id" +
-    			"    AND    c2.symbol <> c1.symbol" +
-    			"    AND    t.account_id = ac.account_id" +
-    			"    AND    t.symbol = c2.symbol" +
-    			"    AND    t.exit_dt IS NULL)",
-    			new MapSqlParameterSource().addValue("accountId", accountId));
-    	logger.info("Rows affected: " + count);
-    	// Set unit size to 0 when a larger contract for the same commodity has unit size > 0
-    	logger.info("Adjusting unit sizes (2): " + accountId);
-    	count = getNamedParameterJdbcTemplate().update(
-    			" UPDATE account_contract ac1" +
-    			" SET    unit_size = 0" +
-    			" WHERE  account_id = :accountId" +
-    			" AND    unit_size > 0" +
-    			" AND EXISTS" +
-    			"   (SELECT 1" +
-    			"    FROM   contract c1," +
-    			"           contract c2," +
-    			"           (SELECT symbol" +
-    			"            FROM   account_contract" +
-    			"            WHERE  account_id = :accountId" +
-    			"            AND    unit_size > 0) ac2" +
-    			"    WHERE  c1.symbol = ac1.symbol" +
-    			"    AND    c2.underlying_id = c1.underlying_id" +
-    			"    AND    c2.symbol <> c1.symbol" +
-    			"    AND    c2.multiplier > c1.multiplier" +
-    			"    AND    ac2.symbol = c2.symbol)",
-    			new MapSqlParameterSource().addValue("accountId", accountId));
-    	logger.info("Rows affected: " + count);
-    }
-    
-    private class AccountMapper implements ParameterizedRowMapper<String> {
-        public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-        	return rs.getString("account_id");
+    private class AccountMapper implements ParameterizedRowMapper<Account> {
+        public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
+        	Account account = new Account();
+        	account.setAccountId(rs.getString("account_id"));
+        	account.setAccountName(rs.getString("account_name"));
+        	account.setDefaultFlag(rs.getBoolean("default_flag"));
+        	return account;
         }
     }
         
