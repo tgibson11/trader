@@ -9,6 +9,7 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import trader.dao.AccountDao;
+import trader.domain.Account;
 
 @Service
 public class AccountService {
@@ -16,7 +17,7 @@ public class AccountService {
 	@Resource
 	private AccountDao accountDao;
 	
-	public List<String> getAccounts() {
+	public List<Account> getAccounts() {
 		return accountDao.getAccounts();
 	}
 	
