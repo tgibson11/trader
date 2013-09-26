@@ -8,9 +8,7 @@
     <input type="submit" name="action" value="Disconnect" />
 	<input type="submit" name="action" value="Clear Messages" />
 
-    <form:select path="account">
-    	<form:options items="${accounts}" />
-    </form:select>
+    <form:select path="account" items="${accounts}" itemLabel="accountName" itemValue="accountId" />
 
 	<input type="file" name="file" accept=".csv" />
 	<input type="submit" name="action" value="Import Orders" />
