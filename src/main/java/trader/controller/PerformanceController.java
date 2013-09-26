@@ -46,7 +46,7 @@ public class PerformanceController extends SimpleFormController {
     	if (accountId != null) {
     		command.setAccountId(accountId);
     	} else {
-        	command.setAccountId(accountService.getAccounts().get(0));
+        	command.setAccountId(accountService.getAccounts().get(0).getAccountId());
     	}
     	return command;
     }
@@ -63,7 +63,9 @@ public class PerformanceController extends SimpleFormController {
         List<PerformanceData> performanceData = performanceService.getPerformanceData(cmd.getAccountId());
         map.put("performanceClass", CSS_CLASS_SELECTED);
         map.put("performanceSummary", performanceService.getPerformanceSummary(performanceData));
-        map.put("cagr", performanceData.get(performanceData.size()-1).getCagr());
+        if (!performanceData.isEmpty()) {
+            map.put("cagr", performanceData.get(performanceData.size()-1).getCagr());        	
+        }
         map.put("vamiChartData", performanceService.getVamiChartData(performanceData));
         // Reverse so records are ordered from newest to oldest
         // Do this last because the methods above require it from oldest to newest
