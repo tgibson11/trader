@@ -6,7 +6,9 @@ CREATE TABLE parameter
   ENGINE=InnoDB;
 
 CREATE TABLE account
-  (account_id VARCHAR(10) NOT NULL PRIMARY KEY)
+  (account_id VARCHAR(10) NOT NULL PRIMARY KEY,
+   account_name VARCHAR(100) NOT NULL,
+   default_flag NUMERIC(1) NOT NULL DEFAULT 0)
   ENGINE=InnoDB;
 
 CREATE TABLE exchange
