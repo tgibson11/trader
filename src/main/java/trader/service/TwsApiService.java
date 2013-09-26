@@ -10,6 +10,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
 
+import trader.domain.Account;
+
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
@@ -106,8 +108,8 @@ public class TwsApiService implements EWrapper {
      * Request account updates for all managed accounts
      */
     private void reqAccountUpdates() {
-    	for (String account : accountService.getAccounts()) {
-            client.reqAccountUpdates(true, account);
+    	for (Account account : accountService.getAccounts()) {
+            client.reqAccountUpdates(true, account.getAccountId());
     	}
     }
     
