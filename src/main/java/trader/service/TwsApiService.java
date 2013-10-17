@@ -168,14 +168,20 @@ public class TwsApiService implements EWrapper {
     		String year = contract.m_expiry.substring(0, 4);
     		String month = contract.m_expiry.substring(4, 6);
     		
-    		// Add 1 to the expiry month
-    		Integer m = Integer.parseInt(month) + 1;
-    		month = m.toString();
-    		
-    		// Left pad with a zero if necessary
-    		if (month.length() == 1) {
-    			month = "0" + month;
+    		// Increment the expiry month
+    		if (month.equals("12")) {
+    			Integer y = Integer.parseInt(year) + 1;
+    			year = y.toString();
+    			month = "01";
+    		} else {
+        		Integer m = Integer.parseInt(month) + 1;
+        		month = m.toString();
+           		// Left pad with a zero if necessary
+        		if (month.length() == 1) {
+         			month = "0" + month;
+        		}        		
     		}
+    		
     		contract.m_expiry = year + month;  		
     	} 
 
