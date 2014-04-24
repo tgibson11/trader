@@ -1,4 +1,2 @@
-/build
-/src/main/webapp/WEB-INF/classes
-/trader.war
 .DS_Store
+/target
