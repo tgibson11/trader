@@ -1,6 +1,5 @@
 package trader.service;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -21,11 +20,11 @@ public class AccountService {
 		return accountDao.getAccounts();
 	}
 	
-	public void updateAccountValue(String accountId, Double value) throws SQLException {
+	public void updateAccountValue(String accountId, Double value) {
 		updateAccountValue(accountId, new Date(), value, null, null);
 	}
 	
-	public void updateAccountValue(String accountId, Date date, Double value, Double deposits, Double withdrawals) throws SQLException {
+	public void updateAccountValue(String accountId, Date date, Double value, Double deposits, Double withdrawals) {
 		if (accountDao.updateAccountHist(accountId, date, value, deposits, withdrawals) == 0) {
 			accountDao.insertAccountHist(accountId, value);
 		}

@@ -26,7 +26,6 @@ public class ParameterService implements ApplicationListener<ApplicationEvent>{
 	 * Loads parameters from database.
 	 * @param event
 	 */
-	@Override
 	public void onApplicationEvent(ApplicationEvent event) {
 		 if (event.getClass().equals(ContextRefreshedEvent.class)) {
 			 loadParameters();

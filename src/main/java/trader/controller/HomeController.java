@@ -7,10 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Resource;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -38,16 +37,16 @@ public class HomeController {
 	
     protected final Log logger = LogFactory.getLog(getClass());
     
-    @Resource
+    @Autowired
     private AccountService accountService;
     
-    @Resource
+    @Autowired
     private MessageService messageService;
     
-    @Resource
+    @Autowired
     private OrderService orderService;
     
-    @Resource
+    @Autowired
     private TwsApiService twsApiService;
     
 	@RequestMapping(value = "home", method = RequestMethod.GET)

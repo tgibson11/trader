@@ -6,41 +6,42 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
-import org.springframework.validation.BindException;
-import org.springframework.validation.Errors;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.ServletRequestDataBinder;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.SimpleFormController;
-import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import trader.command.PerformanceCommand;
 import trader.domain.PerformanceData;
 import trader.service.AccountService;
 import trader.service.PerformanceService;
 
-public class PerformanceController extends SimpleFormController {
+@Controller
+public class PerformanceController {
 
+	private static final String FORM_VIEW = "performance";
+	
     protected final Log logger = LogFactory.getLog(getClass());
     
-    @Resource
+    @Autowired
     private AccountService accountService;
     
-    @Resource
+    @Autowired
     private PerformanceService performanceService;
-    
-    @Override
-    protected Object formBackingObject(HttpServletRequest request) throws Exception {
+
+    @ModelAttribute("command")
+    protected Object formBackingObject(HttpServletRequest request) {
     	PerformanceCommand command = new PerformanceCommand();
     	String accountId = request.getParameter("account");
     	if (accountId != null) {
@@ -51,53 +52,51 @@ public class PerformanceController extends SimpleFormController {
     	return command;
     }
     
-    @Override
-    protected void initBinder(HttpServletRequest request, ServletRequestDataBinder binder) throws Exception {
+    @InitBinder
+    protected void initBinder(ServletRequestDataBinder binder) {
     	binder.registerCustomEditor(Date.class, new CustomDateEditor(new SimpleDateFormat("MM/dd/yyyy"), false));
 	}
-    
-    @Override
-    protected Map<String, Object> referenceData(HttpServletRequest request, Object command, Errors errors) throws Exception {
-    	Map<String, Object> map = new HashMap<String, Object>();
-    	PerformanceCommand cmd = (PerformanceCommand) command;
-        List<PerformanceData> performanceData = performanceService.getPerformanceData(cmd.getAccountId());
-        map.put("performanceClass", CSS_CLASS_SELECTED);
-        map.put("performanceSummary", performanceService.getPerformanceSummary(performanceData));
+
+    @RequestMapping(value="performance", method=RequestMethod.GET)
+    protected String showForm(Model model, @ModelAttribute("command") PerformanceCommand command) {
+        List<PerformanceData> performanceData = performanceService.getPerformanceData(command.getAccountId());
+        model.addAttribute("performanceClass", CSS_CLASS_SELECTED);
+        model.addAttribute("performanceSummary", performanceService.getPerformanceSummary(performanceData));
         if (!performanceData.isEmpty()) {
-            map.put("cagr", performanceData.get(performanceData.size()-1).getCagr());        	
+        	model.addAttribute("cagr", performanceData.get(performanceData.size()-1).getCagr());        	
         }
-        map.put("vamiChartData", performanceService.getVamiChartData(performanceData));
+        model.addAttribute("vamiChartData", performanceService.getVamiChartData(performanceData));
         // Reverse so records are ordered from newest to oldest
         // Do this last because the methods above require it from oldest to newest
         Collections.reverse(performanceData);
-        map.put("performanceData", performanceData);
-        map.put("accounts", accountService.getAccounts());
-    	return map;
+        model.addAttribute("performanceData", performanceData);
+        model.addAttribute("accounts", accountService.getAccounts());
+    	return FORM_VIEW;
     }
     
-    @Override
-    protected boolean isFormChangeRequest(HttpServletRequest request, Object command) {
+    private boolean isFormChangeRequest(HttpServletRequest request) {
     	return request.getParameter("_update") == null;
     }
     
-    @Override
-    public ModelAndView onSubmit(HttpServletRequest request, HttpServletResponse response, Object command, BindException errors) throws Exception {
-
-    	PerformanceCommand cmd = (PerformanceCommand) command;
+    @RequestMapping(value="performance", method=RequestMethod.POST)
+    public String onSubmit(HttpServletRequest request, Model model, @ModelAttribute("command") PerformanceCommand command) {
     	
+    	if (isFormChangeRequest(request)) {
+    		return showForm(model, command);
+    	}
+
     	// Set date to last day of month
     	Calendar cal = Calendar.getInstance();
-    	cal.setTime(cmd.getDate());
+    	cal.setTime(command.getDate());
     	cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DATE));
     	cal.set(Calendar.HOUR, 0);
     	cal.set(Calendar.MINUTE, 0);
     	cal.set(Calendar.SECOND, 0);
     	cal.set(Calendar.MILLISECOND, 0);
     	
-    	accountService.updateAccountValue(cmd.getAccountId(), cal.getTime(), cmd.getNav(), cmd.getDeposits(), cmd.getWithdrawals());       	       	
+    	accountService.updateAccountValue(command.getAccountId(), cal.getTime(), command.getNav(), command.getDeposits(), command.getWithdrawals());       	       	
     	
-    	logger.info("Returning " + getSuccessView() + " view");
-        return new ModelAndView(new RedirectView("performance?account=" + cmd.getAccountId()));
+        return "redirect:performance?account=" + command.getAccountId();
     }
 
 }

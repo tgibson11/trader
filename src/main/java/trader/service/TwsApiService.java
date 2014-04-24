@@ -377,4 +377,24 @@ public class TwsApiService implements EWrapper {
     	String msg = EWrapperMsgGenerator.commissionReport(commissionReport);
     	messageService.addDataMessage(msg);
 	}
+
+	public void accountSummary(int reqId, String account, String tag, String value, String currency) {
+    	String msg = EWrapperMsgGenerator.accountSummary(reqId, account, tag, value, currency);
+    	messageService.addDataMessage(msg);
+	}
+
+	public void accountSummaryEnd(int reqId) {
+    	String msg = EWrapperMsgGenerator.accountSummaryEnd(reqId);
+    	messageService.addDataMessage(msg);
+	}
+
+	public void position(String account, Contract contract, int position, double avgCost) {
+    	String msg = EWrapperMsgGenerator.position(account, contract, position, avgCost);
+    	messageService.addDataMessage(msg);
+	}
+
+	public void positionEnd() {
+    	String msg = EWrapperMsgGenerator.positionEnd();
+    	messageService.addDataMessage(msg);
+	}
 }

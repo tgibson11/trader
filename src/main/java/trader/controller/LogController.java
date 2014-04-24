@@ -5,37 +5,37 @@ import static trader.constants.Constants.CSS_CLASS_SELECTED;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.servlet.mvc.AbstractController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import trader.domain.Message;
 import trader.service.MessageService;
 
-public class LogController extends AbstractController {
+@Controller
+public class LogController {
 
+    private static final String VIEW_NAME = "log"; 
+    
     protected final Log logger = LogFactory.getLog(getClass());
     
-    @Resource
+    @Autowired
     private MessageService messageService;
     
-    @Override
-    protected ModelAndView handleRequestInternal(HttpServletRequest request, HttpServletResponse response) throws Exception {
-    	ModelAndView mav = new ModelAndView("log");
+	@RequestMapping("log")
+    protected String handleRequestInternal(Model model) throws Exception {
     	
     	// Use a new list to avoid concurrentModificationException
     	List<Message> dataMessages = new ArrayList<Message>();
     	dataMessages.addAll(messageService.getDataMessages());
 
-    	mav.addObject("logClass", CSS_CLASS_SELECTED);
-    	mav.addObject("data", dataMessages);
+    	model.addAttribute("logClass", CSS_CLASS_SELECTED);
+    	model.addAttribute("data", dataMessages);
     	
-    	return mav;
+    	return VIEW_NAME;
     }
     
 }

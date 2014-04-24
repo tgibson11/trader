@@ -156,11 +156,10 @@
     // When the DOM is ready and resources are loaded...
     dojo.ready(function() {
 
-        vamiChartData = ${vamiChartData};
- 
         // Create the chart within it's "holding" node
         var vamiChart = new dojox.charting.Chart2D("vamiChartDiv");
- 
+        var vamiChartData = ${vamiChartData};
+         
         // Set the theme
         vamiChart.setTheme(dojox.charting.themes.Claro);
  

@@ -85,6 +85,7 @@ public class OrderService {
 	 */
 	public List<ActionItem> importOrders(MultipartFile file, String account) throws IOException {
 		
+		logger.info("Clearing action items");
 		actionItems.clear();
 		
 		readOrdersFile(file, account);
@@ -134,6 +135,7 @@ public class OrderService {
 				rollover.addOrder(rolloverExit);
 				rollover.addOrder(rolloverEntry);
 				
+				logger.info("Adding action item" + actionItem.getDescription());
 				actionItems.add(rollover);
 				
 				rollovers.remove(symbol);
@@ -144,8 +146,10 @@ public class OrderService {
 			
 			actionItem.addOrder(order);
 			
+			logger.info("Adding action item" + actionItem.getDescription());
 			actionItems.add(actionItem);
 		}
+		logger.info("Action items size=" + actionItems.size());
 		return actionItems;
 	}
 	
@@ -184,6 +188,7 @@ public class OrderService {
 			processedActionItems.add(actionItem);
 		}
 		
+		logger.info("Removing processed action items");
 		actionItems.removeAll(processedActionItems);
 	}
 	
@@ -279,6 +284,7 @@ public class OrderService {
 	    		}
 	    	}
 	    	
+	    	logger.info("Adding generated order to " + order.m_action + " " + order.getContract().m_symbol);
 	    	generatedOrders.add(order);
 	    }
         in.close();
@@ -423,6 +429,7 @@ public class OrderService {
 	 * @return
 	 */
 	public List<ActionItem> getActionItems() {
+		logger.info("actionItems size=" + actionItems.size());
 		return actionItems;
 	}
 	
@@ -435,7 +442,6 @@ public class OrderService {
 	 */
 	private static class OrderComparator implements Comparator<ExtOrder> {
 
-		@Override
 		public int compare(ExtOrder o1, ExtOrder o2) {
 						
 			if (o1.getContract() == null) {

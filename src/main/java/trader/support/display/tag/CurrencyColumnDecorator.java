@@ -10,7 +10,6 @@ import org.displaytag.properties.MediaTypeEnum;
 
 public class CurrencyColumnDecorator implements DisplaytagColumnDecorator {
 
-	@Override
 	public Object decorate(Object object, PageContext pageContext, MediaTypeEnum mediaTypeEnum) throws DecoratorException {
 		if (object != null) {
 			return NumberFormat.getCurrencyInstance().format(object);
