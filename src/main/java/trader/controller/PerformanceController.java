@@ -1,5 +1,6 @@
 package trader.controller;
 
+import static org.apache.commons.lang.StringUtils.isBlank;
 import static trader.constants.Constants.CSS_CLASS_SELECTED;
 
 import java.text.SimpleDateFormat;
@@ -18,11 +19,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.ServletRequestDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import trader.command.PerformanceCommand;
 import trader.domain.PerformanceData;
 import trader.service.AccountService;
 import trader.service.PerformanceService;
@@ -40,26 +40,19 @@ public class PerformanceController {
     @Autowired
     private PerformanceService performanceService;
 
-    @ModelAttribute("command")
-    protected Object formBackingObject(HttpServletRequest request) {
-    	PerformanceCommand command = new PerformanceCommand();
-    	String accountId = request.getParameter("account");
-    	if (accountId != null) {
-    		command.setAccountId(accountId);
-    	} else {
-        	command.setAccountId(accountService.getAccounts().get(0).getAccountId());
-    	}
-    	return command;
-    }
-    
     @InitBinder
     protected void initBinder(ServletRequestDataBinder binder) {
     	binder.registerCustomEditor(Date.class, new CustomDateEditor(new SimpleDateFormat("MM/dd/yyyy"), false));
 	}
 
     @RequestMapping(value="performance", method=RequestMethod.GET)
-    protected String showForm(Model model, @ModelAttribute("command") PerformanceCommand command) {
-        List<PerformanceData> performanceData = performanceService.getPerformanceData(command.getAccountId());
+    protected String showForm(@RequestParam(value="accountId", required=false) String accountId, Model model) {
+    	
+    	if (isBlank(accountId)) {
+    		accountId = accountService.getAccounts().get(0).getAccountId();
+    	}
+    	
+        List<PerformanceData> performanceData = performanceService.getPerformanceData(accountId);
         model.addAttribute("performanceClass", CSS_CLASS_SELECTED);
         model.addAttribute("performanceSummary", performanceService.getPerformanceSummary(performanceData));
         if (!performanceData.isEmpty()) {
@@ -71,6 +64,7 @@ public class PerformanceController {
         Collections.reverse(performanceData);
         model.addAttribute("performanceData", performanceData);
         model.addAttribute("accounts", accountService.getAccounts());
+        model.addAttribute("selectedAccountId", accountId);
     	return FORM_VIEW;
     }
     
@@ -78,25 +72,31 @@ public class PerformanceController {
     	return request.getParameter("_update") == null;
     }
     
-    @RequestMapping(value="performance", method=RequestMethod.POST)
-    public String onSubmit(HttpServletRequest request, Model model, @ModelAttribute("command") PerformanceCommand command) {
+   @RequestMapping(value="performance", method=RequestMethod.POST)
+    public String onSubmit(HttpServletRequest request,
+    		@RequestParam(value="accountId") String accountId,
+    		@RequestParam(value="date") Date date,
+    		@RequestParam(value="nav") Double nav,
+    		@RequestParam(value="deposits") Double deposits,
+    		@RequestParam(value="withdrawals") Double withdrawals,
+    		Model model) {
     	
     	if (isFormChangeRequest(request)) {
-    		return showForm(model, command);
+    		return showForm(accountId, model);
     	}
 
     	// Set date to last day of month
     	Calendar cal = Calendar.getInstance();
-    	cal.setTime(command.getDate());
+    	cal.setTime(date);
     	cal.set(Calendar.DATE, cal.getActualMaximum(Calendar.DATE));
     	cal.set(Calendar.HOUR, 0);
     	cal.set(Calendar.MINUTE, 0);
     	cal.set(Calendar.SECOND, 0);
     	cal.set(Calendar.MILLISECOND, 0);
     	
-    	accountService.updateAccountValue(command.getAccountId(), cal.getTime(), command.getNav(), command.getDeposits(), command.getWithdrawals());       	       	
+    	accountService.updateAccountValue(accountId, cal.getTime(), nav, deposits, withdrawals);       	       	
     	
-        return "redirect:performance?account=" + command.getAccountId();
+        return "redirect:performance?account=" + accountId;
     }
 
 }

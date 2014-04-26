@@ -2,29 +2,42 @@
 
 <h1>Performance</h1>
 
-<form:form id="performanceForm">
+<form id="performanceForm" action="/trader/performance" method="post">
     <div>
         <label for="accountId">Account:</label>
-        <form:select path="accountId" id="accountId" items="${accounts}" itemLabel="accountName" itemValue="accountId" onchange="document.getElementById('performanceForm').submit();" />
+        <select id="accountId" name="accountId" onchange="document.getElementById('performanceForm').submit();">
+        	<c:forEach items="${accounts}" var="account">
+        		<c:choose>
+        			<c:when test="${ account.accountId == selectedAccountId }">
+        				<option value="${account.accountId}" selected="selected"><c:out value="${account.accountName}" /></option>
+        			</c:when>
+        			<c:otherwise>
+        				<option value="${account.accountId}"><c:out value="${account.accountName}" /></option>
+        			</c:otherwise>
+        		</c:choose>
+        	</c:forEach>
+        </select>
     </div>
     <div>
         <fieldset>
             <legend>Update</legend>
 	        <label for="date">Date:</label>
-	        <form:select path="date" id="date" items="${performanceData}" itemLabel="date" itemValue="date" />
+	        <select id="date" name="date">
+	        	<c:forEach items="${performanceData}" var="data">
+	        		<c:set var="date"><fmt:formatDate value="${data.date}" pattern="MM/dd/yyyy" /></c:set>
+	        		<option value="${date}">${date}</option>
+	        	</c:forEach>
+	        </select>
 	        <label for="deposits">Deposits:</label>
-	        <form:input path="deposits" id="deposits" />
+	        <input type="text" id="deposits" name="deposits" />
 	        <label for="withdrawals">Withdrawals:</label>
-	        <form:input path="withdrawals" id="withdrawals" />
+	        <input type="text" id="withdrawals" name="withdrawals" />
 	        <label for="nav">NAV:</label>
-	        <form:input path="nav" id="nav" />
+	        <input type="text" id="nav" name="nav" />
 	        <input type="submit" name="_update" value="Submit" />
         </fieldset>
     </div>
-    <div>
-        <form:errors path="*" cssClass="error" />
-    </div>
-</form:form>
+</form>
 
 <div class="table">
     <display:table id="performanceTable" name="performanceData" requestURI="performance" sort="list" defaultsort="1" defaultorder="descending">
