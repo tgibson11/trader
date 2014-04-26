@@ -2,27 +2,29 @@
 
 <h1>Trader</h1>
 
-<form:form enctype="multipart/form-data">
+<form action="/trader/home" method="post" enctype="multipart/form-data">
   
     <input type="submit" name="action" value="Connect" />
     <input type="submit" name="action" value="Disconnect" />
 	<input type="submit" name="action" value="Clear Messages" />
 
-    <form:select path="account" items="${accounts}" itemLabel="accountName" itemValue="accountId" />
+	<select name="account">
+		<c:forEach items="${accounts}" var="account">
+			<option value="${account.accountId}"><c:out value="${account.accountName}" /></option>
+		</c:forEach>
+	</select>
 
 	<input type="file" name="file" accept=".csv" />
 	<input type="submit" name="action" value="Import Orders" />
 	
-   	<form:errors path="*" cssClass="error" />
-	   
 	<div class="table">
 	    <display:table name="actionItems" uid="actionItem">
 	        <display:column property="description" title="Action Items"></display:column>
 	        <display:column title="Ignore" class="align-center">
-	        	<form:radiobutton path="submittedActionItems[${actionItem_rowNum - 1}]" value="false" />
+	        	<input type="radio" name="actionItems[${actionItem_rowNum - 1}]" value="false"/>
 	        </display:column>
 	        <display:column title="Execute" class="align-center">
-	        	<form:radiobutton path="submittedActionItems[${actionItem_rowNum - 1}]" value="true" />
+	        	<input type="radio" name="actionItems[${actionItem_rowNum - 1}]" value="true"/>
 	        </display:column>
 	    </display:table>
 	</div>
@@ -37,7 +39,7 @@
 	    </display:table>
 	</div> 
 	
-</form:form>
+</form>
 
 
 <script type="text/javascript">

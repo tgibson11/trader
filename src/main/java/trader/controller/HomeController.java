@@ -12,13 +12,13 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import trader.command.ImportOrdersCommand;
+import trader.command.ActionItemsCommand;
 import trader.domain.Message;
 import trader.service.AccountService;
 import trader.service.MessageService;
@@ -50,7 +50,7 @@ public class HomeController {
     private TwsApiService twsApiService;
     
 	@RequestMapping(value = "home", method = RequestMethod.GET)
-    public String showForm(@ModelAttribute("command") ImportOrdersCommand command, Model model) {
+    public String showForm(Model model) {
 
     	// Use a new list to avoid concurrentModificationException
     	List<Message> messages = new ArrayList<Message>();    	
@@ -65,9 +65,12 @@ public class HomeController {
     }
 
 	@RequestMapping(value = "home", method = RequestMethod.POST)
-    public String onSubmit(@ModelAttribute("command") ImportOrdersCommand command, BindingResult bindingResult, Model model) throws IOException {
+    public String onSubmit(
+    		@RequestParam(value="action") String action,
+    		@RequestParam(value="account") String account,
+    		@RequestParam(value="file") MultipartFile file,
+    		@ModelAttribute(value="command") ActionItemsCommand command) throws IOException {
     	
-		String action = command.getAction();
 		if (isBlank(action)) {
 			
     		logger.info("No action specified...");
@@ -90,12 +93,12 @@ public class HomeController {
 		} else if (action.equalsIgnoreCase(ACTION_IMPORT)) {
     		
 			logger.info("Import requested...");
-    		importOrders(command, bindingResult);
+    		importOrders(account, file);
     		
     	} else if (action.equalsIgnoreCase(ACTION_SUBMIT)) {
     		
     		logger.info("Processing action items...");
-    		orderService.processActionItems(command.getSubmittedActionItems());
+    		orderService.processActionItems(command.getActionItems());
     	}
     	
     	logger.info("Returning to " + VIEW);   	
@@ -103,20 +106,15 @@ public class HomeController {
     }
 	
 	/**
-	 * Do simple validation and call service method to import orders
-	 * @param command
-	 * @param bindingResult
-	 * @return 
-	 * @throws IOException 
+	 * Import orders from file into account
+	 * @param account
+	 * @param file
+	 * @throws IOException
 	 */
-	private void importOrders(ImportOrdersCommand command, BindingResult bindingResult) throws IOException {
-		logger.info("account=" + command.getAccount());
-		MultipartFile file = command.getFile();
-		if (file == null || file.isEmpty()) {
-			Object[] args = { "File" };
-			bindingResult.rejectValue("file", "error.required", args, "Required");
-		} else {
-			orderService.importOrders(file, command.getAccount());
+	private void importOrders(String account, MultipartFile file) throws IOException {
+		logger.info("account=" + account);
+		if (file != null && !file.isEmpty()) {
+			orderService.importOrders(file, account);
 		}
 	}
     
