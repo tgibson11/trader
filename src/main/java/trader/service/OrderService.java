@@ -3,7 +3,6 @@ package trader.service;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static trader.constants.Constants.CONTRACT_CURRENCY_USD;
 import static trader.constants.Constants.CONTRACT_SEC_TYPE_FUTURE;
-import static trader.constants.Constants.FUTURES_MONTHS;
 import static trader.constants.Constants.ORDER_ACTION_BUY;
 import static trader.constants.Constants.ORDER_ACTION_SELL;
 import static trader.constants.Constants.ORDER_TIF_GTC;
@@ -33,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import trader.constants.DeliveryMonth;
 import trader.domain.ActionItem;
 import trader.domain.ExtOrder;
 import trader.domain.Position;
@@ -350,7 +350,7 @@ public class OrderService {
 			year++;
 		}
 		
-		return year.toString() + FUTURES_MONTHS.get(monthLetter);
+		return year.toString() + DeliveryMonth.valueOf(monthLetter).getTwoDigitMonth();
 	}
 	
 	/**
