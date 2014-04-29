@@ -3,15 +3,7 @@ package trader.constants;
 
 public class Constants {
 	
-	// Contract properties
-	public static final String		CONTRACT_SEC_TYPE_FUTURE	= "FUT";
-	public static final String		CONTRACT_CURRENCY_USD		= "USD";
-	
 	// Order properties
-	public static final String		ORDER_ACTION_BUY			= "BUY";
-	public static final String		ORDER_ACTION_SELL			= "SELL";
-	public static final String		ORDER_TYPE_STOP				= "STP";
-	public static final String		ORDER_TYPE_MKT				= "MKT";
 	public static final String		ORDER_TIF_GTC				= "GTC";
 	
 	// Order statuses

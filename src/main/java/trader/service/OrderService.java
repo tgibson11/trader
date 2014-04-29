@@ -1,13 +1,7 @@
 package trader.service;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static trader.constants.Constants.CONTRACT_CURRENCY_USD;
-import static trader.constants.Constants.CONTRACT_SEC_TYPE_FUTURE;
-import static trader.constants.Constants.ORDER_ACTION_BUY;
-import static trader.constants.Constants.ORDER_ACTION_SELL;
 import static trader.constants.Constants.ORDER_TIF_GTC;
-import static trader.constants.Constants.ORDER_TYPE_MKT;
-import static trader.constants.Constants.ORDER_TYPE_STOP;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -33,12 +27,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import trader.constants.DeliveryMonth;
+import trader.constants.OrderAction;
 import trader.domain.ActionItem;
 import trader.domain.ExtOrder;
 import trader.domain.Position;
 
 import com.ib.client.Contract;
 import com.ib.client.Order;
+import com.ib.contracts.FutContract;
+import com.ib.controller.OrderType;
 
 @Service
 public class OrderService {
@@ -218,29 +215,27 @@ public class OrderService {
 	    	String orderType = fields[FIELD_INDEX_ORDER_TYPE];
 	    	boolean exitOrder = false;
 	    	if (orderType.equals(ORDER_TYPE_LONG_ENTRY)) {
-	    		order.m_action = ORDER_ACTION_BUY;
+	    		order.m_action = OrderAction.BUY.toString();
 	    	} else if (orderType.equals(ORDER_TYPE_LONG_EXIT)) {
-	    		order.m_action = ORDER_ACTION_SELL;
+	    		order.m_action = OrderAction.SELL.toString();
 	    		exitOrder = true;
 	    	}  else if (orderType.equals(ORDER_TYPE_SHORT_ENTRY)) {
-	    		order.m_action = ORDER_ACTION_SELL;
+	    		order.m_action = OrderAction.SELL.toString();
 	    	}  else if (orderType.equals(ORDER_TYPE_SHORT_EXIT)) {
-	    		order.m_action = ORDER_ACTION_BUY;
+	    		order.m_action = OrderAction.BUY.toString();
 	    		exitOrder = true;
 	    	} else {
 	    		// Probably the header row: skip it
 	    		continue;
 	    	}
 	    	
-	    	Contract contract = new Contract();
-            contract.m_secType = CONTRACT_SEC_TYPE_FUTURE;
-            contract.m_currency = CONTRACT_CURRENCY_USD;
-	    	contract.m_symbol = fields[FIELD_INDEX_BROKER_SYMBOL];
+	    	String symbol = fields[FIELD_INDEX_BROKER_SYMBOL];
+	    	String expiry = convertMonthToExpiry(fields[FIELD_INDEX_MONTH]);
+	    	Contract contract = new FutContract(symbol, expiry);
 	    	contract.m_exchange = contractService.getExchange(contract.m_symbol);
-	    	contract.m_expiry = convertMonthToExpiry(fields[FIELD_INDEX_MONTH]);
 	    	
 	    	order.m_account = account;
-            order.m_orderType = ORDER_TYPE_STOP;
+            order.m_orderType = OrderType.STP.getApiString();
             order.m_tif = ORDER_TIF_GTC;
 	    	
 	    	// Quantity
@@ -252,10 +247,10 @@ public class OrderService {
 	    		order.m_totalQuantity = Math.abs(position.getQuantity());
 	    	} else if (!exitOrder && position != null) {
 	    		// Already have a position: in which direction?
-	    		if (position.getQuantity() > 0 && order.m_action.equals(ORDER_ACTION_BUY)) {
+	    		if (position.getQuantity() > 0 && order.m_action.equals(OrderAction.BUY.toString())) {
 	    			// Already have a long position: ignore this order
 	    			continue;
-	    		} else if (position.getQuantity() < 0 && order.m_action.equals(ORDER_ACTION_SELL)) {
+	    		} else if (position.getQuantity() < 0 && order.m_action.equals(OrderAction.SELL.toString())) {
 	    			// Already have a short position: ignore this order
 	    			continue;
 	    		} else {
@@ -299,13 +294,13 @@ public class OrderService {
 	private ExtOrder createRolloverExit(Contract contract, Integer position, String account) {
         ExtOrder rolloverExit = new ExtOrder();
         rolloverExit.m_account = account;
-        rolloverExit.m_orderType = ORDER_TYPE_MKT;
+        rolloverExit.m_orderType = OrderType.MKT.getApiString();
         rolloverExit.m_tif = ORDER_TIF_GTC;
 
         if (position > 0) {
-            rolloverExit.m_action = ORDER_ACTION_SELL;
+            rolloverExit.m_action = OrderAction.SELL.toString();
         } else {
-            rolloverExit.m_action = ORDER_ACTION_BUY;
+            rolloverExit.m_action = OrderAction.BUY.toString();
         }
         
         rolloverExit.m_totalQuantity = Math.abs(position);        
@@ -321,13 +316,13 @@ public class OrderService {
 	private ExtOrder createRolloverEntry(Contract contract, Integer position, String account) {
         ExtOrder rolloverEntry = new ExtOrder();
         rolloverEntry.m_account = account;
-        rolloverEntry.m_orderType = ORDER_TYPE_MKT;
+        rolloverEntry.m_orderType = OrderType.MKT.getApiString();
         rolloverEntry.m_tif = ORDER_TIF_GTC;
         
         if (position > 0) {
-        	rolloverEntry.m_action = ORDER_ACTION_BUY;
+        	rolloverEntry.m_action = OrderAction.BUY.toString();
         } else {
-        	rolloverEntry.m_action = ORDER_ACTION_SELL;
+        	rolloverEntry.m_action = OrderAction.SELL.toString();
         }
         
         rolloverEntry.m_totalQuantity = Math.abs(position);        
