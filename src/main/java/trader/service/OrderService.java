@@ -1,7 +1,6 @@
 package trader.service;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static trader.constants.Constants.ORDER_TIF_GTC;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import trader.constants.DeliveryMonth;
-import trader.constants.OrderAction;
 import trader.domain.ActionItem;
 import trader.domain.ExtOrder;
 import trader.domain.Position;
@@ -36,6 +34,8 @@ import com.ib.client.Contract;
 import com.ib.client.Order;
 import com.ib.contracts.FutContract;
 import com.ib.controller.OrderType;
+import com.ib.controller.Types.Action;
+import com.ib.controller.Types.TimeInForce;
 
 @Service
 public class OrderService {
@@ -215,14 +215,14 @@ public class OrderService {
 	    	String orderType = fields[FIELD_INDEX_ORDER_TYPE];
 	    	boolean exitOrder = false;
 	    	if (orderType.equals(ORDER_TYPE_LONG_ENTRY)) {
-	    		order.m_action = OrderAction.BUY.toString();
+	    		order.m_action = Action.BUY.getApiString();
 	    	} else if (orderType.equals(ORDER_TYPE_LONG_EXIT)) {
-	    		order.m_action = OrderAction.SELL.toString();
+	    		order.m_action = Action.SELL.getApiString();
 	    		exitOrder = true;
 	    	}  else if (orderType.equals(ORDER_TYPE_SHORT_ENTRY)) {
-	    		order.m_action = OrderAction.SELL.toString();
+	    		order.m_action = Action.SELL.getApiString();
 	    	}  else if (orderType.equals(ORDER_TYPE_SHORT_EXIT)) {
-	    		order.m_action = OrderAction.BUY.toString();
+	    		order.m_action = Action.BUY.getApiString();
 	    		exitOrder = true;
 	    	} else {
 	    		// Probably the header row: skip it
@@ -236,7 +236,7 @@ public class OrderService {
 	    	
 	    	order.m_account = account;
             order.m_orderType = OrderType.STP.getApiString();
-            order.m_tif = ORDER_TIF_GTC;
+            order.m_tif = TimeInForce.GTC.getApiString();
 	    	
 	    	// Quantity
 	    	Position position = openPositions.get(account + contract.m_symbol);
@@ -247,10 +247,10 @@ public class OrderService {
 	    		order.m_totalQuantity = Math.abs(position.getQuantity());
 	    	} else if (!exitOrder && position != null) {
 	    		// Already have a position: in which direction?
-	    		if (position.getQuantity() > 0 && order.m_action.equals(OrderAction.BUY.toString())) {
+	    		if (position.getQuantity() > 0 && order.m_action.equals(Action.BUY.getApiString())) {
 	    			// Already have a long position: ignore this order
 	    			continue;
-	    		} else if (position.getQuantity() < 0 && order.m_action.equals(OrderAction.SELL.toString())) {
+	    		} else if (position.getQuantity() < 0 && order.m_action.equals(Action.SELL.getApiString())) {
 	    			// Already have a short position: ignore this order
 	    			continue;
 	    		} else {
@@ -295,12 +295,12 @@ public class OrderService {
         ExtOrder rolloverExit = new ExtOrder();
         rolloverExit.m_account = account;
         rolloverExit.m_orderType = OrderType.MKT.getApiString();
-        rolloverExit.m_tif = ORDER_TIF_GTC;
+        rolloverExit.m_tif = TimeInForce.GTC.getApiString();
 
         if (position > 0) {
-            rolloverExit.m_action = OrderAction.SELL.toString();
+            rolloverExit.m_action = Action.SELL.getApiString();
         } else {
-            rolloverExit.m_action = OrderAction.BUY.toString();
+            rolloverExit.m_action = Action.BUY.getApiString();
         }
         
         rolloverExit.m_totalQuantity = Math.abs(position);        
@@ -317,12 +317,12 @@ public class OrderService {
         ExtOrder rolloverEntry = new ExtOrder();
         rolloverEntry.m_account = account;
         rolloverEntry.m_orderType = OrderType.MKT.getApiString();
-        rolloverEntry.m_tif = ORDER_TIF_GTC;
+        rolloverEntry.m_tif = TimeInForce.GTC.getApiString();
         
         if (position > 0) {
-        	rolloverEntry.m_action = OrderAction.BUY.toString();
+        	rolloverEntry.m_action = Action.BUY.getApiString();
         } else {
-        	rolloverEntry.m_action = OrderAction.SELL.toString();
+        	rolloverEntry.m_action = Action.SELL.getApiString();
         }
         
         rolloverEntry.m_totalQuantity = Math.abs(position);        

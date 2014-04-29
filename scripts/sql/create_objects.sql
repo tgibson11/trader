@@ -1,10 +1,5 @@
 USE trd;
 
-CREATE TABLE parameter
-  (parameter_cd    VARCHAR(100)  NOT NULL PRIMARY KEY,
-   parameter_value VARCHAR(100) NOT NULL)
-  ENGINE=InnoDB;
-
 CREATE TABLE account
   (account_id VARCHAR(10) NOT NULL PRIMARY KEY,
    account_name VARCHAR(100) NOT NULL,

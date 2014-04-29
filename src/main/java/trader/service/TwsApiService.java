@@ -1,13 +1,10 @@
 package trader.service;
 
-import static trader.constants.Constants.PARAMETER_CD_TWS_PORT;
-import static trader.constants.Constants.ORDER_STATUS_CANCELLED;
-import static trader.constants.Constants.ORDER_STATUS_FILLED;
-
 import javax.annotation.Resource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import trader.domain.Account;
@@ -22,6 +19,7 @@ import com.ib.client.Execution;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.UnderComp;
+import com.ib.controller.OrderStatus;
 
 @Service
 public class TwsApiService implements EWrapper {
@@ -42,17 +40,18 @@ public class TwsApiService implements EWrapper {
 	@Resource
 	private OrderService orderService;
 	
-	@Resource
-	private ParameterService parameterService;
-	
 	private EClientSocket client = new EClientSocket(this);	
-	private Integer nextOrderId = 0;
 	
+	@Value("${tws.port}")
+	private int twsPort;
+	
+	private Integer nextOrderId = 0;
+
 	/**
 	 * Connect to TWS and request account updates
 	 */
 	public void connect() {
-        client.eConnect(null, parameterService.getIntParameter(PARAMETER_CD_TWS_PORT), 0);
+        client.eConnect(null, twsPort, 0);
         
         if (client.isConnected()) {
         	messageService.addInfoMessage("Connected to TWS server version " + client.serverVersion());
@@ -149,7 +148,7 @@ public class TwsApiService implements EWrapper {
     	String msg = EWrapperMsgGenerator.orderStatus(orderId, status, filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld);
     	messageService.addDataMessage(msg);
     	
-    	if (status.equals(ORDER_STATUS_CANCELLED) || status.equals(ORDER_STATUS_FILLED)) {
+    	if (status.equals(OrderStatus.Cancelled.toString()) || status.equals(OrderStatus.Filled.toString())) {
         	orderService.removeOpenOrder(orderId);
     	}
     }
