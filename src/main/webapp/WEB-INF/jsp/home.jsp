@@ -4,9 +4,9 @@
 
 <form action="/trader/home" method="post" enctype="multipart/form-data">
   
-    <input type="submit" name="action" value="Connect" />
-    <input type="submit" name="action" value="Disconnect" />
-	<input type="submit" name="action" value="Clear Messages" />
+    <input type="submit" name="connect" value="Connect" />
+    <input type="submit" name="disconnect" value="Disconnect" />
+	<input type="submit" name="clear" value="Clear Messages" />
 
 	<select name="account">
 		<c:forEach items="${accounts}" var="account">
@@ -15,7 +15,7 @@
 	</select>
 
 	<input type="file" name="file" accept=".csv" />
-	<input type="submit" name="action" value="Import Orders" />
+	<input type="submit" name="import" value="Import Orders" />
 	
 	<div class="table">
 	    <display:table name="actionItems" uid="actionItem">
@@ -29,7 +29,7 @@
 	    </display:table>
 	</div>
 
-	<input type="submit" name="action" value="Submit Action Items" />
+	<input type="submit" name="submit" value="Submit Action Items" />
 	<input type="button" id="clear-action-items" value="Clear Selected Action Items" />
 
 	<div class="table">
