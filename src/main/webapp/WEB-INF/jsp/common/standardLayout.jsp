@@ -14,13 +14,26 @@
 	<body>
 		<div id="header">	
 		    <ul>
-		        <li class="${homeClass}"><a href="<c:url value="home" />">Home</a></li>
-		        <li class="${performanceClass}"><a href="<c:url value="performance" />">Performance</a></li>
-		        <li class="${logClass}"><a href="<c:url value="log" />">Log</a></li>
+		        <li id="home-tab"><a href="<c:url value="home" />">Home</a></li>
+		        <li id="performance-tab"><a href="<c:url value="performance" />">Performance</a></li>
+		        <li id="log-tab"><a href="<c:url value="log" />">Log</a></li>
 		    </ul>	
 		</div>        
         <div id="content">
             <tiles:insertAttribute name="body" />
         </div>
+		<script>
+			$(function() {
+				var selectedClassName = "selected";
+				var path = window.location.pathname;
+				if (path.indexOf("home") != -1) {
+					$("#home-tab").addClass(selectedClassName);
+				} else if (path.indexOf("performance") != -1) {
+					$("#performance-tab").addClass(selectedClassName);
+				} else if (path.indexOf("log") != -1) {
+					$("#log-tab").addClass(selectedClassName);
+				}
+			});
+		</script>
 	</body>
 </html>

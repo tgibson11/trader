@@ -1,7 +1,6 @@
 package trader.controller;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static trader.constants.Constants.CSS_CLASS_SELECTED;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,8 +55,7 @@ public class HomeController {
     	List<Message> messages = new ArrayList<Message>();    	
     	messages.addAll(messageService.getInfoMessages());
     	
-    	model.addAttribute("homeClass", CSS_CLASS_SELECTED);
-    	model.addAttribute("accounts", accountService.getAccounts());
+     	model.addAttribute("accounts", accountService.getAccounts());
     	model.addAttribute("messages", messages);
     	model.addAttribute("actionItems", orderService.getActionItems());
     	

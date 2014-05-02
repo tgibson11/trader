@@ -1,7 +1,5 @@
 package trader.controller;
 
-import static trader.constants.Constants.CSS_CLASS_SELECTED;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +30,6 @@ public class LogController {
     	List<Message> dataMessages = new ArrayList<Message>();
     	dataMessages.addAll(messageService.getDataMessages());
 
-    	model.addAttribute("logClass", CSS_CLASS_SELECTED);
     	model.addAttribute("data", dataMessages);
     	
     	return VIEW_NAME;

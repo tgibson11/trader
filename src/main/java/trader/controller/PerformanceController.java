@@ -1,7 +1,6 @@
 package trader.controller;
 
 import static org.apache.commons.lang.StringUtils.isBlank;
-import static trader.constants.Constants.CSS_CLASS_SELECTED;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -53,7 +52,6 @@ public class PerformanceController {
     	}
     	
         List<PerformanceData> performanceData = performanceService.getPerformanceData(accountId);
-        model.addAttribute("performanceClass", CSS_CLASS_SELECTED);
         model.addAttribute("performanceSummary", performanceService.getPerformanceSummary(performanceData));
         if (!performanceData.isEmpty()) {
         	model.addAttribute("cagr", performanceData.get(performanceData.size()-1).getCagr());        	
