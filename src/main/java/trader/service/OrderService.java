@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
 import javax.annotation.Resource;
 
@@ -466,7 +470,56 @@ public class OrderService {
 			}
 			return Integer.valueOf(Math.abs(o2.m_orderId)).compareTo(Math.abs(o1.m_orderId));
 		}
-		
+
+		@Override
+		public Comparator<ExtOrder> reversed() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Comparator<ExtOrder> thenComparing(
+				Comparator<? super ExtOrder> other) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public <U> Comparator<ExtOrder> thenComparing(
+				Function<? super ExtOrder, ? extends U> keyExtractor,
+				Comparator<? super U> keyComparator) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public <U extends Comparable<? super U>> Comparator<ExtOrder> thenComparing(
+				Function<? super ExtOrder, ? extends U> keyExtractor) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Comparator<ExtOrder> thenComparingInt(
+				ToIntFunction<? super ExtOrder> keyExtractor) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Comparator<ExtOrder> thenComparingLong(
+				ToLongFunction<? super ExtOrder> keyExtractor) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Comparator<ExtOrder> thenComparingDouble(
+				ToDoubleFunction<? super ExtOrder> keyExtractor) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
 	}
 	
 }
