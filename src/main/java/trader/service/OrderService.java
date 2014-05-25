@@ -8,18 +8,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.ToDoubleFunction;
-import java.util.function.ToIntFunction;
-import java.util.function.ToLongFunction;
 
 import javax.annotation.Resource;
 
@@ -30,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import trader.constants.DeliveryMonth;
-import trader.domain.ActionItem;
 import trader.domain.ExtOrder;
 import trader.domain.Position;
 
@@ -60,8 +53,6 @@ public class OrderService {
 	private static final String		ORDER_TYPE_SHORT_ENTRY		= "Short Entry";
 	private static final String		ORDER_TYPE_SHORT_EXIT		= "Short Exit";
 	
-	private static final OrderComparator	orderComparator 	= new OrderComparator();
-	
     protected final Log logger = LogFactory.getLog(getClass());
     
     private Map<Integer, ExtOrder> openOrders = new HashMap<Integer, ExtOrder>();
@@ -70,7 +61,7 @@ public class OrderService {
     private List<ExtOrder> generatedOrders = new ArrayList<ExtOrder>();
     private Set<String> rollovers = new HashSet<String>();
     
-    private List<ActionItem> actionItems = new ArrayList<ActionItem>();
+    private List<ExtOrder> actionItems = new ArrayList<ExtOrder>();
     
     @Resource
     private ContractService contractService;
@@ -84,7 +75,7 @@ public class OrderService {
 	 * @param account
 	 * @throws IOException 
 	 */
-	public List<ActionItem> importOrders(MultipartFile file, String account) throws IOException {
+	public List<ExtOrder> importOrders(MultipartFile file, String account) throws IOException {
 		
 		logger.info("Clearing action items");
 		actionItems.clear();
@@ -108,47 +99,28 @@ public class OrderService {
 		// Combine and sort orders
 		List<ExtOrder> updatedOrders = new ArrayList<ExtOrder>(newOrders);
 		updatedOrders.addAll(cancelledOrders);
-		Collections.sort(updatedOrders, orderComparator);
 				
 		// Build list of action items
 		for (ExtOrder order : updatedOrders) {
-			ActionItem actionItem = new ActionItem();
 			
 			Contract contract = order.getContract();
 			String symbol = contract.m_symbol;
-			String expiry = contract.m_expiry;
 			boolean isNewOrder = (order.m_orderId == 0);
-			
-			String action = "Cancel order to ";
-			if (isNewOrder) {
-				action = "Place order to ";
-			}
 			
 			// Handle rollovers
 			if (rollovers.contains(symbol) && isNewOrder) {
-				ActionItem rollover = new ActionItem();
-				rollover.setDescription("Rollover " + symbol + " to " + expiry);
 
 				Position position = openPositions.get(account + symbol);
 				ExtOrder rolloverExit = createRolloverExit(position.getContract(), position.getQuantity(), account);
 				ExtOrder rolloverEntry = createRolloverEntry(contract, position.getQuantity(), account);
 
-				rollover.addOrder(rolloverExit);
-				rollover.addOrder(rolloverEntry);
-				
-				logger.info("Adding action item" + actionItem.getDescription());
-				actionItems.add(rollover);
+				actionItems.add(rolloverExit);
+				actionItems.add(rolloverEntry);
 				
 				rollovers.remove(symbol);
 			}
 			
-			actionItem.setDescription(action + order.m_action + " " + order.m_totalQuantity 
-					+ " " + symbol + " " + expiry + " " + " @ " + order.m_auxPrice);
-			
-			actionItem.addOrder(order);
-			
-			logger.info("Adding action item" + actionItem.getDescription());
-			actionItems.add(actionItem);
+			actionItems.add(order);
 		}
 		logger.info("Action items size=" + actionItems.size());
 		return actionItems;
@@ -167,23 +139,21 @@ public class OrderService {
 	 */
 	public void processActionItems(Map<Integer, Boolean> actionItemIndices) {
 	
-		List<ActionItem> processedActionItems = new ArrayList<ActionItem>(); 
+		List<ExtOrder> processedActionItems = new ArrayList<ExtOrder>(); 
 		
 		for (Entry<Integer, Boolean> entry : actionItemIndices.entrySet()) {
 			
 			int actionItemIndex = entry.getKey();
 			boolean isExecute = entry.getValue();
-			ActionItem actionItem = actionItems.get(actionItemIndex);
+			ExtOrder actionItem = actionItems.get(actionItemIndex);
 			
 			if (isExecute) {
-				for (ExtOrder order : actionItem.getOrders()) {
-					if (order.m_orderId == 0) {
-						// This is a new order...place it
-						twsApiService.placeOrder(order.getContract(), order);
-					} else {
-						// This is an existing order...cancel it
-						twsApiService.cancelOrder(order.getContract(), order);
-					}
+				if (actionItem.m_orderId == 0) {
+					// This is a new order...place it
+					twsApiService.placeOrder(actionItem.getContract(), actionItem);
+				} else {
+					// This is an existing order...cancel it
+					twsApiService.cancelOrder(actionItem.getContract(), actionItem);
 				}
 			}
 			processedActionItems.add(actionItem);
@@ -427,99 +397,9 @@ public class OrderService {
 	 * Returns the current list of action items
 	 * @return
 	 */
-	public List<ActionItem> getActionItems() {
+	public List<ExtOrder> getActionItems() {
 		logger.info("actionItems size=" + actionItems.size());
 		return actionItems;
-	}
-	
-	/**
-	 * Sorts ExtOrders by symbol, action, and the absolute value of orderId (descending).
-	 * For orderId, non-zero values are first, indicating orders to be canceled.
-	 * Using the absolute value because orders entered directly in TWS will have a negative orderId.
-	 * @author Todd
-	 *
-	 */
-	private static class OrderComparator implements Comparator<ExtOrder> {
-
-		public int compare(ExtOrder o1, ExtOrder o2) {
-						
-			if (o1.getContract() == null) {
-				if (o2.getContract() != null) {
-					return -1;
-				}
-			} else if (o2.getContract() == null) {
-				return 1;
-			} else if (o1.getContract().m_symbol == null) {
-				if (o2.getContract().m_symbol != null) {
-					return -1;
-				}
-			} else {
-				int result = o1.getContract().m_symbol.compareTo(o2.getContract().m_symbol);
-				if (result != 0) {
-					return result;
-				} else if (o1.m_action == null) {
-					if (o2.m_action != null) {
-						return -1;
-					}
-				} else { 
-					result = o1.m_action.compareTo(o2.m_action);
-					if (result != 0) {
-						return result;
-					}
-				}
-			}
-			return Integer.valueOf(Math.abs(o2.m_orderId)).compareTo(Math.abs(o1.m_orderId));
-		}
-
-		@Override
-		public Comparator<ExtOrder> reversed() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Comparator<ExtOrder> thenComparing(
-				Comparator<? super ExtOrder> other) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <U> Comparator<ExtOrder> thenComparing(
-				Function<? super ExtOrder, ? extends U> keyExtractor,
-				Comparator<? super U> keyComparator) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <U extends Comparable<? super U>> Comparator<ExtOrder> thenComparing(
-				Function<? super ExtOrder, ? extends U> keyExtractor) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Comparator<ExtOrder> thenComparingInt(
-				ToIntFunction<? super ExtOrder> keyExtractor) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Comparator<ExtOrder> thenComparingLong(
-				ToLongFunction<? super ExtOrder> keyExtractor) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Comparator<ExtOrder> thenComparingDouble(
-				ToDoubleFunction<? super ExtOrder> keyExtractor) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
 	}
 	
 }

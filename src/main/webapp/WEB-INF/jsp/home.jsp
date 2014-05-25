@@ -18,13 +18,27 @@
 	<input type="submit" name="import" value="Import Orders" />
 	
 	<div class="table">
-	    <display:table name="actionItems" uid="actionItem">
-	        <display:column property="description" title="Action Items"></display:column>
+	    <display:table htmlId="action-items-table" name="actionItems" uid="order">
+	    	<display:column title="Action" >
+	    		<c:choose>
+	    			<c:when test="${ order.orderId == 0 }">Place Order</c:when>
+	    			<c:otherwise>Cancel Order</c:otherwise>
+	    		</c:choose>
+	    	</display:column>
+	    	<display:column title="Order Action" property="action" />
+	    	<display:column title="Quantity" property="totalQuantity" class="align-right" />
+	    	<display:column title="Symbol" property="contractSymbol" />
+	    	<display:column title="Expiry" property="contractExpiry" />
+	    	<display:column title="Price" property="auxPrice" class="align-right" />
 	        <display:column title="Ignore" class="align-center">
-	        	<input type="radio" name="actionItems[${actionItem_rowNum - 1}]" value="false"/>
+	        	<label for="ignore-action-item-${order_rowNum - 1}">
+	        		<input type="radio" id="ignore-action-item-${order_rowNum - 1}" name="actionItems[${order_rowNum - 1}]" value="false" />
+	        	</label>
 	        </display:column>
 	        <display:column title="Execute" class="align-center">
-	        	<input type="radio" name="actionItems[${actionItem_rowNum - 1}]" value="true"/>
+	        	<label for="execute-action-item-${order_rowNum - 1}">
+	        		<input type="radio" id="execute-action-item-${order_rowNum - 1}" name="actionItems[${order_rowNum - 1}]" value="true" />
+	        	</label>
 	        </display:column>
 	    </display:table>
 	</div>
@@ -43,9 +57,23 @@
 
 
 <script type="text/javascript">
-	$(document).ready(function() {
+	$(function() {
+		
+		$('#action-items-table').dataTable({
+			"columnDefs": [ {
+				"targets": "_all",
+				"orderable": false
+			} ],
+			"info": false,
+			"lengthchange": false,
+			"order": [ [ 3, "asc" ], [ 1, "asc" ], [ 0, "asc" ] ],
+			"paging": false,
+			"searching": false
+		}).ordering(false);
+		
 		$("#clear-action-items").click(function() {
-			$("#actionItem input:radio").prop('checked', false);
+			$("#action-items-table input:radio").prop('checked', false);
 		});
+		
 	});
 </script>  

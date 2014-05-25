@@ -9,6 +9,7 @@
 	    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	    <link rel="stylesheet" type="text/css" href="css/trader.css" />
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+        <script src="//cdn.datatables.net/1.10.0/js/jquery.dataTables.min.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/dojo/1.6/dojo/dojo.xd.js"></script>
 	</head>
 	<body>

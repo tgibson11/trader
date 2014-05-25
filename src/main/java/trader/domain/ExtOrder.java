@@ -23,6 +23,30 @@ public class ExtOrder extends Order {
         m_account = order.m_account;
 		this.contract = contract;	
 	}
+	
+	public int getOrderId() {
+		return m_orderId;
+	}
+	
+	public String getAction() {
+		return m_action;
+	}
+	
+	public int getTotalQuantity() {
+		return m_totalQuantity;
+	}
+	
+	public String getTif() {
+		return m_tif;
+	}
+	
+	public double getAuxPrice() {
+		return m_auxPrice;
+	}
+	
+	public String getAccount() {
+		return m_account;
+	}
 
 	public Contract getContract() {
 		return contract;
@@ -30,6 +54,14 @@ public class ExtOrder extends Order {
 
 	public void setContract(Contract contract) {
 		this.contract = contract;
+	}
+	
+	public String getContractSymbol() {
+		return contract.m_symbol;
+	}
+	
+	public String getContractExpiry() {
+		return contract.m_expiry;
 	}
 
 	@Override
