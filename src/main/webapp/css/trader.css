@@ -63,6 +63,19 @@ th, td {
     padding-left: 0.5em;
     padding-right: 0.5em;
 }
+
+/* Make <label> completely fill the parent <td> */
+#action-items-table tr {
+	height: 1px;
+}
+#action-items-table td {
+	height: 100%;
+}
+#action-items-table td label {
+	display: block; 
+    min-height: 100%;
+}
+
 #performanceForm div {
 	padding-top: 1em;
 }
