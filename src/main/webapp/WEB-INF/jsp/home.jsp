@@ -59,7 +59,7 @@
 <script type="text/javascript">
 	$(function() {
 		
-		$('#action-items-table').dataTable({
+		$("#action-items-table").DataTable({
 			"columnDefs": [ {
 				"targets": "_all",
 				"orderable": false
@@ -69,7 +69,7 @@
 			"order": [ [ 3, "asc" ], [ 1, "asc" ], [ 0, "asc" ] ],
 			"paging": false,
 			"searching": false
-		}).ordering(false);
+		});
 		
 		$("#clear-action-items").click(function() {
 			$("#action-items-table input:radio").prop('checked', false);
