@@ -29,7 +29,9 @@
 	    	<display:column title="Quantity" property="totalQuantity" class="align-right" />
 	    	<display:column title="Symbol" property="contractSymbol" />
 	    	<display:column title="Expiry" property="contractExpiry" />
-	    	<display:column title="Price" property="auxPrice" class="align-right" />
+	    	<display:column title="Price" class="align-right">
+    			<c:if test="${ order.orderType == 'STP' }"><c:out value="${order.auxPrice}" /></c:if>
+	    	</display:column>
 	        <display:column title="Ignore" class="align-center">
 	        	<label for="ignore-action-item-${order_rowNum - 1}">
 	        		<input type="radio" id="ignore-action-item-${order_rowNum - 1}" name="actionItems[${order_rowNum - 1}]" value="false" />
@@ -66,7 +68,7 @@
 			} ],
 			"info": false,
 			"lengthchange": false,
-			"order": [ [ 3, "asc" ], [ 1, "asc" ], [ 0, "asc" ] ],
+			"order": [ [ 3, "asc" ], [ 4, "asc" ], [ 1, "asc" ], [ 0, "asc" ] ],
 			"paging": false,
 			"searching": false
 		});
