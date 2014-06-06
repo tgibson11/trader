@@ -36,6 +36,10 @@ public class ExtOrder extends Order {
 		return m_totalQuantity;
 	}
 	
+	public String getOrderType() {
+		return m_orderType;
+	}
+	
 	public String getTif() {
 		return m_tif;
 	}
