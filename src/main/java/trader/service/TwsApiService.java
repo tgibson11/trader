@@ -20,6 +20,7 @@ import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.UnderComp;
 import com.ib.controller.OrderStatus;
+import com.ib.controller.OrderType;
 
 @Service
 public class TwsApiService implements EWrapper {
@@ -80,9 +81,12 @@ public class TwsApiService implements EWrapper {
      * @param order
      */
     public void placeOrder (Contract contract, Order order) {
-        String msg = "Placing order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ " + order.m_auxPrice + " for " + order.m_account;
-        messageService.addInfoMessage(msg);
-        
+    	if (order.m_orderType.equals(OrderType.MKT)) {
+    		messageService.addInfoMessage("Placing order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ MKT for " + order.m_account);
+    	} else {
+    		messageService.addInfoMessage("Placing order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ " + order.m_auxPrice + " for " + order.m_account);
+    	}
+         
     	if (order.m_orderId == 0) {
             order.m_orderId = nextOrderId;
             nextOrderId++;
@@ -97,9 +101,12 @@ public class TwsApiService implements EWrapper {
      * @param order
      */
     public void cancelOrder (Contract contract, Order order) {
-        String msg = "Canceling order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ " + order.m_auxPrice + " for " + order.m_account;
-        messageService.addInfoMessage(msg);
-        
+    	if (order.m_orderType.equals(OrderType.MKT)) {
+    		messageService.addInfoMessage("Canceling order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ MKT for " + order.m_account);
+	 	} else {
+	 		messageService.addInfoMessage("Canceling order to " + order.m_action + " " + order.m_totalQuantity + " " + contract.m_symbol + " @ " + order.m_auxPrice + " for " + order.m_account);
+	 	}
+         
          client.cancelOrder(order.m_orderId);
     }
     
