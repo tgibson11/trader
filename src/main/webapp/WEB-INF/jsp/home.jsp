@@ -30,7 +30,10 @@
 	    	<display:column title="Symbol" property="contractSymbol" />
 	    	<display:column title="Expiry" property="contractExpiry" />
 	    	<display:column title="Price" class="align-right">
-    			<c:if test="${ order.orderType == 'STP' }"><c:out value="${order.auxPrice}" /></c:if>
+	    		<c:choose>
+	    			<c:when test="${ order.orderType == 'MKT' }">MKT</c:when>
+	    			<c:otherwise><c:out value="${order.auxPrice}" /></c:otherwise>
+	    		</c:choose>
 	    	</display:column>
 	        <display:column title="Ignore" class="align-center">
 	        	<label for="ignore-action-item-${order_rowNum - 1}">
