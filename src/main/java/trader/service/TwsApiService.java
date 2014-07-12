@@ -52,14 +52,17 @@ public class TwsApiService implements EWrapper {
 	 * Connect to TWS and request account updates
 	 */
 	public void connect() {
-        client.eConnect(null, twsPort, 0);
+		
+		orderService.clearOpenOrders();
+    	orderService.clearOpenOrders();
+
+    	client.eConnect(null, twsPort, 0);
         
         if (client.isConnected()) {
         	messageService.addInfoMessage("Connected to TWS server version " + client.serverVersion());
         	
         	reqAccountUpdates();
         	
-        	orderService.clearOpenOrders();
         	client.reqAllOpenOrders();
         	client.reqAutoOpenOrders(true);
         }

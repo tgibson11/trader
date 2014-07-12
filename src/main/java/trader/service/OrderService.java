@@ -351,6 +351,13 @@ public class OrderService {
 	}
 	
 	/**
+	 * Clears the open positions map
+	 */
+	public void clearOpenPositions() {
+		openPositions.clear();
+	}
+	
+	/**
 	 * Builds an ExtOrder object from contract and order,
 	 * and adds that object to the open orders map
 	 * @param contract
