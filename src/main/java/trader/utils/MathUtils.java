@@ -14,4 +14,13 @@ public class MathUtils {
 	    return a == b ? true : Math.abs(a - b) < EPSILON;
 	}
 	
+	/**
+	 * Rounds d to the nearest whole-number multiple of increment
+	 * @param d
+	 * @param increment
+	 * @return
+	 */
+	public static double round(double d, double increment) {
+		return Math.round(d / increment) * increment;
+	}	
 }

@@ -27,7 +27,9 @@ CREATE TABLE contract
   (symbol				VARCHAR(3)	NOT NULL PRIMARY KEY,
    exchange				VARCHAR(20)	NOT NULL,
    price_factor			DOUBLE		NOT NULL DEFAULT 1,
-   prior_month_expriry	NUMERIC(1)	NOT NULL DEFAULT 0)
+   prior_month_expriry	NUMERIC(1)	NOT NULL DEFAULT 0,
+   multiplier			NUMERIC(5),
+   price_increment		NUMERIC(10,6))
   ENGINE=InnoDB;
 
 CREATE TABLE account_contract

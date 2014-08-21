@@ -39,4 +39,27 @@ public class ContractService {
 	public boolean hasPriorMonthExpiry(String symbol) {
 		return contractDao.hasPriorMonthExpiry(symbol);
 	}
+	
+	/**
+	 * Returns the contract multiplier for the specified symbol.
+	 * <p>
+	 * Used to uniquely identify a contract when symbol and exchange are insufficient.
+	 * 
+	 * @param symbol
+	 * @return
+	 */
+	public Integer getMultiplier(String symbol) {
+		return contractDao.getMultiplier(symbol);
+	}
+
+	/**
+	 * Returns the minimum price increment for the specified symbol.
+	 * 
+	 * @param symbol
+	 * @return
+	 */
+	public Double getPriceIncrement(String symbol) {
+		return contractDao.getPriceIncrement(symbol);
+	}
+	
 }

@@ -72,5 +72,37 @@ public class ContractDao extends NamedParameterJdbcDaoSupport {
 			return false;
 		}
 	}
+	
+	/**
+	 * Returns the contract multiplier for the specified symbol.
+	 * <p>
+	 * Used to uniquely identify a contract when symbol and exchange are insufficient.
+	 * 
+	 * @param symbol
+	 * @return
+	 */
+	public Integer getMultiplier(String symbol) {
+		return getNamedParameterJdbcTemplate().queryForObject(
+				" SELECT multiplier" +
+				" FROM trd.contract" +
+				" WHERE symbol = :symbol", 
+				new MapSqlParameterSource("symbol", symbol), 
+				Integer.class);
+	}
+
+	/**
+	 * Returns the minimum price increment for the specified symbol.
+	 * 
+	 * @param symbol
+	 * @return
+	 */
+	public Double getPriceIncrement(String symbol) {
+		return getNamedParameterJdbcTemplate().queryForObject(
+				" SELECT price_increment" +
+				" FROM trd.contract" +
+				" WHERE symbol = :symbol", 
+				new MapSqlParameterSource("symbol", symbol), 
+				Double.class);
+	}
 
 }

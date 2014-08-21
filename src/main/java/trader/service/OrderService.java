@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import trader.constants.DeliveryMonth;
 import trader.domain.ExtOrder;
 import trader.domain.Position;
+import trader.utils.MathUtils;
 
 import com.ib.client.Contract;
 import com.ib.client.Order;
@@ -208,6 +209,12 @@ public class OrderService {
 	    	Contract contract = new FutContract(symbol, expiry);
 	    	contract.m_exchange = contractService.getExchange(contract.m_symbol);
 	    	
+	    	// Symbol + exchange is not enough to uniquely identify some contracts
+	    	Integer multiplier = contractService.getMultiplier(contract.m_symbol);
+	    	if (multiplier != null) {
+		    	contract.m_multiplier = multiplier.toString();
+	    	}
+	    	
 	    	order.m_account = account;
             order.m_orderType = OrderType.STP.getApiString();
             order.m_tif = TimeInForce.GTC.getApiString();
@@ -237,7 +244,13 @@ public class OrderService {
 	    	// Order Price
 	    	Double priceFactor = contractService.getPriceFactor(contract.m_symbol);
 	    	order.m_auxPrice = parsePrice(fields[FIELD_INDEX_ORDER_PRICE]) * priceFactor;
-	    	
+
+	    	// Round to the nearest allowed price increment
+	    	Double priceIncrement = contractService.getPriceIncrement(contract.m_symbol);
+	    	if (priceIncrement != null) {
+	    		order.m_auxPrice = MathUtils.round(order.m_auxPrice, priceIncrement);
+	    	}
+
 	    	order.setContract(contract);
 	    	
 	    	// Roll Info
