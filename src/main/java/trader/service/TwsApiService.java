@@ -54,7 +54,7 @@ public class TwsApiService implements EWrapper {
 	public void connect() {
 		
 		orderService.clearOpenOrders();
-    	orderService.clearOpenOrders();
+    	orderService.clearOpenPositions();
 
     	client.eConnect(null, twsPort, 0);
         
