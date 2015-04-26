@@ -406,4 +406,24 @@ public class TwsApiService implements EWrapper {
     	String msg = EWrapperMsgGenerator.positionEnd();
     	messageService.addDataMessage(msg);
 	}
+
+	@Override
+	public void verifyMessageAPI(String apiData) {
+		// TODO Auto-generated method stub		
+	}
+
+	@Override
+	public void verifyCompleted(boolean isSuccessful, String errorText) {
+		// TODO Auto-generated method stub		
+	}
+
+	@Override
+	public void displayGroupList(int reqId, String groups) {
+		// TODO Auto-generated method stub		
+	}
+
+	@Override
+	public void displayGroupUpdated(int reqId, String contractInfo) {
+		// TODO Auto-generated method stub		
+	}
 }
